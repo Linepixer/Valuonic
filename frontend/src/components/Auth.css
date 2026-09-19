@@ -1,0 +1,369 @@
+/* Auth.css - Split Screen Layout */
+
+.auth-split-container {
+  display: flex;
+  min-height: 100vh;
+  width: 100%;
+  background-color: #050505; /* Fallback */
+  font-family: 'Inter', -apple-system, sans-serif;
+  overflow-x: hidden;
+}
+
+/* FORM PANEL (Right) */
+.auth-form-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 2rem 5%;
+  position: relative;
+  z-index: 10;
+  background: #050505;
+}
+
+.auth-nav-mobile {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  cursor: pointer;
+  margin-bottom: 2rem;
+}
+
+.auth-form-container {
+  max-width: 400px;
+  width: 100%;
+  margin: auto;
+  padding: 2rem 0;
+}
+
+.auth-title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  letter-spacing: -0.02em;
+}
+
+.auth-subtitle {
+  color: #a1a1aa;
+  font-size: 1rem;
+  margin-bottom: 2.5rem;
+}
+
+/* Inputs */
+.auth-input-group {
+  margin-bottom: 1.25rem;
+  position: relative;
+}
+
+.auth-label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #a1a1aa;
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.auth-input {
+  width: 100%;
+  padding: 0.85rem 1rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #fff;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: all 0.2s ease;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.auth-input:focus {
+  border-color: #10B981;
+  background: rgba(16, 185, 129, 0.05);
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
+.auth-input::placeholder {
+  color: #52525b;
+}
+
+.password-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-input-wrapper input {
+  padding-right: 3rem;
+}
+
+.auth-password-toggle {
+  position: absolute;
+  right: 0.5rem;
+  background: transparent;
+  border: none;
+  color: #a1a1aa;
+  cursor: pointer;
+  padding: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s;
+}
+
+.auth-password-toggle:hover {
+  color: #fff;
+}
+
+.auth-forgot-link {
+  background: none;
+  border: none;
+  color: #10B981;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 500;
+  padding: 0;
+  text-decoration: none;
+  transition: color 0.2s;
+  position: absolute;
+  right: 0;
+  top: 0;
+}
+.auth-forgot-link:hover {
+  color: #34d399;
+}
+
+/* Submit Button */
+.btn-auth-submit {
+  width: 100%;
+  padding: 1rem;
+  background: #10B981;
+  color: #050505;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 1rem;
+}
+
+.btn-auth-submit:hover:not(:disabled) {
+  background: #34d399;
+  transform: translateY(-1px);
+}
+
+.btn-auth-submit:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* Google Button & Divider */
+.auth-divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  margin: 2rem 0;
+  color: #52525b;
+  font-size: 0.85rem;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.auth-divider:not(:empty)::before {
+  margin-right: 1rem;
+}
+
+.auth-divider:not(:empty)::after {
+  margin-left: 1rem;
+}
+
+.btn-google {
+  width: 100%;
+  padding: 0.85rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #fff;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: not-allowed;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  transition: all 0.2s;
+  opacity: 0.6;
+}
+
+.btn-google:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.btn-google img {
+  width: 20px;
+  height: 20px;
+}
+
+/* Footer link */
+.auth-switch {
+  margin-top: 2rem;
+  text-align: center;
+  color: #a1a1aa;
+  font-size: 0.95rem;
+}
+
+.auth-switch span {
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.auth-switch span:hover {
+  color: #10B981;
+}
+
+/* VISUAL PANEL (Left) */
+.auth-visual-panel {
+  flex: 1.2;
+  position: relative;
+  background-color: #030303;
+  background-image: 
+    linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+  background-size: 60px 60px;
+  background-position: center center;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-start;
+  border-right: 1px solid rgba(255, 255, 255, 0.05);
+  overflow: hidden;
+  padding: 4rem;
+}
+
+.auth-nav-desktop {
+  position: absolute;
+  top: 3rem;
+  left: 4rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  cursor: pointer;
+  z-index: 20;
+}
+
+/* Abstract Orbs */
+.auth-glow-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  z-index: 1;
+  pointer-events: none;
+}
+
+.orb-1 {
+  width: 450px;
+  height: 450px;
+  background: #10B981;
+  opacity: 0.25;
+  top: -100px;
+  left: -100px;
+  animation: floatOrb 12s ease-in-out infinite alternate;
+}
+
+.orb-2 {
+  width: 550px;
+  height: 550px;
+  background: rgba(16, 185, 129, 0.15);
+  bottom: -150px;
+  right: -100px;
+  animation: floatOrb2 15s ease-in-out infinite alternate;
+}
+
+@keyframes floatOrb {
+  0% { transform: translate(0, 0) scale(1); }
+  100% { transform: translate(50px, 80px) scale(1.1); }
+}
+
+@keyframes floatOrb2 {
+  0% { transform: translate(0, 0) scale(1); }
+  100% { transform: translate(-80px, -50px) scale(0.9); }
+}
+
+/* Typography */
+.auth-visual-content {
+  position: relative;
+  z-index: 10;
+  max-width: 500px;
+  padding-bottom: 2rem;
+}
+
+.auth-visual-title {
+  font-size: 3.5rem;
+  font-weight: 700;
+  color: #fff;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  margin-bottom: 1.5rem;
+}
+
+.auth-visual-title span {
+  color: #10B981;
+}
+
+.auth-visual-desc {
+  font-size: 1.1rem;
+  color: #a1a1aa;
+  line-height: 1.6;
+}
+
+/* Date Pickers Grouping */
+.auth-date-group {
+  display: flex;
+  gap: 0.5rem;
+}
+.auth-date-group select {
+  flex: 1;
+  padding: 0.85rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #fff;
+  border-radius: 10px;
+  outline: none;
+}
+.auth-date-group select:focus {
+  border-color: #10B981;
+}
+.auth-date-group select option {
+  background: #18181b;
+  color: #fff;
+}
+
+@media (max-width: 900px) {
+  .auth-split-container {
+    flex-direction: column-reverse;
+  }
+  .auth-visual-panel {
+    display: none;
+  }
+  .auth-form-panel {
+    padding: 2rem;
+    justify-content: center;
+  }
+  .auth-nav-desktop {
+    display: none;
+  }
+  .auth-nav-mobile {
+    display: flex;
+  }
+}

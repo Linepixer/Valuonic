@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import api from '../api';
 import es from '../locales/es.json';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
+import './Auth.css';
 
 export default function Auth({ onLogin }) {
   const navigate = useNavigate();
@@ -34,7 +35,6 @@ export default function Auth({ onLogin }) {
   const days = Array.from({ length: 31 }, (_, i) => i + 1);
 
   useEffect(() => {
-    // Force unauthenticated users into the login page if they wander off
     if (location.pathname !== '/login' && location.pathname !== '/signup') {
       const search = location.search;
       navigate('/login' + search, { replace: true });
@@ -76,7 +76,6 @@ export default function Auth({ onLogin }) {
           headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
         });
         
-        localStorage.setItem('token', res.data.access_token);
         onLogin();
       } else {
         const birthDate = (bYear && bMonth && bDay) 
@@ -120,197 +119,182 @@ export default function Auth({ onLogin }) {
   };
 
   return (
-    <div style={{ maxWidth: '500px', margin: '100px auto' }}>
-      <div className="card">
-        <h2 style={{ marginBottom: '1.5rem' }}>{isLogin ? t.loginTitle : t.registerTitle}</h2>
-        
-        {error && <div className={`badge ${error.includes('exitoso') || error.includes('enviado') ? 'badge-profit' : 'badge-loss'}`} style={{ marginBottom: '1rem', display: 'block', padding: '0.5rem' }}>{error}</div>}
-        
-        {needsVerification && (
-          <button 
-            type="button" 
-            onClick={handleResendVerification}
-            disabled={isResending}
-            style={{ 
-              width: '100%', 
-              marginBottom: '1.5rem', 
-              padding: '0.75rem', 
-              background: 'transparent', 
-              color: 'var(--accent)', 
-              border: '1px solid var(--accent)', 
-              borderRadius: '4px', 
-              cursor: isResending ? 'not-allowed' : 'pointer', 
-              fontWeight: 'bold',
-              opacity: isResending ? 0.7 : 1,
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-              height: '46px'
-            }}
-          >
-            {isResending ? <Loader2 className="animate-spin" size={20} /> : t.resendEmail}
+    <div className="auth-split-container">
+      
+      {/* Visual Panel (Left) */}
+      <div className="auth-visual-panel">
+        <nav className="auth-nav-desktop" onClick={() => navigate('/')}>
+          <img src="/logo.png" alt="LedgerView Logo" style={{ height: '24px' }} />
+          <span style={{ fontSize: '1.2rem', fontWeight: 700, letterSpacing: '-0.05em', color: '#fff' }}>LedgerView</span>
+        </nav>
+
+        <div className="auth-glow-orb orb-1"></div>
+        <div className="auth-glow-orb orb-2"></div>
+
+        <div className="auth-visual-content animate-landing" style={{ animationDelay: '0.2s' }}>
+          <h1 className="auth-visual-title">Invierte con <span>claridad</span>.</h1>
+          <p className="auth-visual-desc">Todas tus inversiones en un solo lugar. Métricas avanzadas, seguimiento en tiempo real y el control absoluto de tu portafolio.</p>
+        </div>
+      </div>
+
+      {/* Form Panel (Right) */}
+      <div className="auth-form-panel">
+        <nav className="auth-nav-mobile" onClick={() => navigate('/')}>
+          <img src="/logo.png" alt="LedgerView Logo" style={{ height: '32px' }} />
+        </nav>
+
+        <div className="auth-form-container animate-landing">
+          <h2 className="auth-title">{isLogin ? t.loginTitle : t.registerTitle}</h2>
+          <p className="auth-subtitle">{isLogin ? "Ingresá tus credenciales para continuar." : "Comenzá a medir tu rendimiento real hoy."}</p>
+          
+          <button className="btn-google" type="button" disabled>
+            <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" />
+            {isLogin ? "Continuar con Google" : "Registrarse con Google"}
           </button>
-        )}
-        
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-          {!isLogin && (
-            <>
-              <div>
-                <label className="summary-label">{t.nameLabel}</label>
-                <input 
-                  type="text" 
-                  required
-                  placeholder={t.namePlaceholder}
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  style={{ width: '100%', padding: '0.75rem', marginTop: '0.5rem', background: 'var(--bg-main)', border: '1px solid var(--border)', color: 'white', borderRadius: '4px' }}
-                />
-              </div>
-              <div style={{ display: 'flex', gap: '1rem' }}>
-                <div style={{ flex: 1 }}>
-                  <label className="summary-label">{t.birthDateLabel}</label>
-                  <div style={{ display: 'flex', gap: '0.5rem' }}>
-                    <select
-                      value={bDay}
-                      onChange={(e) => setBDay(e.target.value)}
-                      style={{ flex: 1, padding: '0.75rem', marginTop: '0.5rem', background: 'var(--bg-main)', border: '1px solid var(--border)', color: bDay ? 'white' : 'var(--text-muted)', borderRadius: '4px' }}
-                    >
-                      <option value="" disabled hidden style={{ color: 'var(--text-muted)' }}>{t.day}</option>
-                      {days.map(d => <option key={d} value={d} style={{ color: 'white' }}>{d}</option>)}
-                    </select>
-                    <select
-                      value={bMonth}
-                      onChange={(e) => setBMonth(e.target.value)}
-                      style={{ flex: 1.5, padding: '0.75rem', marginTop: '0.5rem', background: 'var(--bg-main)', border: '1px solid var(--border)', color: bMonth ? 'white' : 'var(--text-muted)', borderRadius: '4px' }}
-                    >
-                      <option value="" disabled hidden style={{ color: 'var(--text-muted)' }}>{t.month}</option>
-                      {t.months.map((m, i) => <option key={i} value={i + 1} style={{ color: 'white' }}>{m}</option>)}
-                    </select>
-                    <select
-                      value={bYear}
-                      onChange={(e) => setBYear(e.target.value)}
-                      style={{ flex: 1.2, padding: '0.75rem', marginTop: '0.5rem', background: 'var(--bg-main)', border: '1px solid var(--border)', color: bYear ? 'white' : 'var(--text-muted)', borderRadius: '4px' }}
-                    >
-                      <option value="" disabled hidden style={{ color: 'var(--text-muted)' }}>{t.year}</option>
-                      {years.map(y => <option key={y} value={y} style={{ color: 'white' }}>{y}</option>)}
-                    </select>
+
+          <div className="auth-divider">o continuá con email</div>
+
+          {error && <div className={`badge ${error.includes('exitoso') || error.includes('enviado') ? 'badge-profit' : 'badge-loss'}`} style={{ marginBottom: '1.5rem', display: 'block', padding: '0.75rem', textAlign: 'center' }}>{error}</div>}
+          
+          {needsVerification && (
+            <button 
+              type="button" 
+              onClick={handleResendVerification}
+              disabled={isResending}
+              className="btn-auth-submit"
+              style={{ background: 'transparent', border: '1px solid var(--accent)', color: 'var(--accent)', marginBottom: '1.5rem' }}
+            >
+              {isResending ? <Loader2 className="animate-spin" size={20} /> : t.resendEmail}
+            </button>
+          )}
+
+          <form onSubmit={handleSubmit}>
+            {!isLogin && (
+              <>
+                <div className="auth-input-group">
+                  <label className="auth-label">{t.nameLabel}</label>
+                  <input 
+                    type="text" 
+                    required
+                    placeholder={t.namePlaceholder}
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    className="auth-input"
+                  />
+                </div>
+                <div style={{ display: 'flex', gap: '1rem' }}>
+                  <div className="auth-input-group" style={{ flex: 1.5 }}>
+                    <label className="auth-label">{t.birthDateLabel}</label>
+                    <div className="auth-date-group">
+                      <select value={bDay} onChange={(e) => setBDay(e.target.value)} required>
+                        <option value="" disabled hidden>{t.day}</option>
+                        {days.map(d => <option key={d} value={d}>{d}</option>)}
+                      </select>
+                      <select value={bMonth} onChange={(e) => setBMonth(e.target.value)} required>
+                        <option value="" disabled hidden>{t.month}</option>
+                        {t.months.map((m, i) => <option key={i} value={i + 1}>{m}</option>)}
+                      </select>
+                      <select value={bYear} onChange={(e) => setBYear(e.target.value)} required>
+                        <option value="" disabled hidden>{t.year}</option>
+                        {years.map(y => <option key={y} value={y}>{y}</option>)}
+                      </select>
+                    </div>
                   </div>
                 </div>
-                <div style={{ flex: 1 }}>
-                  <label className="summary-label">{t.countryLabel}</label>
+                <div className="auth-input-group">
+                  <label className="auth-label">{t.countryLabel}</label>
                   <select
                     value={country}
                     onChange={(e) => setCountry(e.target.value)}
-                    style={{ width: '100%', padding: '0.75rem', marginTop: '0.5rem', background: 'var(--bg-main)', border: '1px solid var(--border)', color: country ? 'white' : 'var(--text-muted)', borderRadius: '4px' }}
+                    className="auth-input"
+                    required
                   >
-                    <option value="" disabled hidden style={{ color: 'var(--text-muted)' }}>{t.countryPlaceholder}</option>
+                    <option value="" disabled hidden>{t.countryPlaceholder}</option>
                     {Object.entries(t.countries).map(([code, countryName]) => (
-                      <option key={code} value={countryName} style={{ color: 'white' }}>{countryName}</option>
+                      <option key={code} value={countryName}>{countryName}</option>
                     ))}
                   </select>
                 </div>
-              </div>
-            </>
-          )}
-          <div>
-            <label className="summary-label">{t.emailLabel}</label>
-            <input 
-              type="email" 
-              required
-              placeholder={isLogin ? t.loginEmailPlaceholder : t.emailPlaceholder}
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              style={{ width: '100%', padding: '0.75rem', marginTop: '0.5rem', background: 'var(--bg-main)', border: '1px solid var(--border)', color: 'white', borderRadius: '4px' }}
-            />
-          </div>
-          <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <label className="summary-label">{t.passwordLabel}</label>
+              </>
+            )}
+            
+            <div className="auth-input-group">
+              <label className="auth-label">{t.emailLabel}</label>
+              <input 
+                type="email" 
+                required
+                placeholder={isLogin ? t.loginEmailPlaceholder : t.emailPlaceholder}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="auth-input"
+              />
+            </div>
+
+            <div className="auth-input-group">
+              <label className="auth-label">{t.passwordLabel}</label>
               {isLogin && (
                 <button 
                   type="button"
-                  onClick={() => {
-                    navigate('/forgot-password');
-                  }}
-                  style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '0.85rem', fontStyle: 'italic', fontWeight: 500, padding: 0, textDecoration: 'none' }}
+                  onClick={() => navigate('/forgot-password')}
+                  className="auth-forgot-link"
                 >
                   {t.forgotPassword}
                 </button>
               )}
-            </div>
-            <div className="password-input-flex">
-              <input 
-                type={showPassword ? 'text' : 'password'}
-                required
-                placeholder={isLogin ? t.loginPasswordPlaceholder : t.passwordPlaceholder}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                style={{ flex: 1, color: 'white', outline: 'none', minWidth: 0 }}
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                style={{ paddingRight: '0.75rem', paddingLeft: '0.25rem', background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-              >
-                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-              </button>
-            </div>
-          </div>
-          {!isLogin && (
-            <div>
-              <label className="summary-label">{t.confirmPasswordLabel}</label>
-              <div className="password-input-flex">
+              <div className="password-input-wrapper">
                 <input 
-                  type={showConfirmPassword ? 'text' : 'password'}
+                  type={showPassword ? 'text' : 'password'}
                   required
-                  placeholder={t.confirmPasswordPlaceholder}
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  style={{ flex: 1, color: 'white', outline: 'none', minWidth: 0 }}
+                  placeholder={isLogin ? t.loginPasswordPlaceholder : t.passwordPlaceholder}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="auth-input"
                 />
                 <button
                   type="button"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  style={{ paddingRight: '0.75rem', paddingLeft: '0.25rem', background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="auth-password-toggle"
                 >
-                  {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
               </div>
             </div>
-          )}
-          
-          <button 
-            type="submit" 
-            disabled={isLoading}
-            style={{ 
-              padding: '0.75rem', 
-              background: 'var(--accent)', 
-              color: 'var(--bg-main)', 
-              border: 'none', 
-              borderRadius: '4px', 
-              cursor: isLoading ? 'not-allowed' : 'pointer', 
-              fontWeight: 'bold', 
-              marginTop: '1rem',
-              opacity: isLoading ? 0.7 : 1,
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-              height: '46px' // Keep height consistent when spinner appears
-            }}
-          >
-            {isLoading ? <Loader2 className="animate-spin" size={20} /> : (isLogin ? t.loginButton : t.registerButton)}
-          </button>
-        </form>
-        
-        <p style={{ marginTop: '1.5rem', textAlign: 'center', color: 'var(--text-muted)' }}>
-          {isLogin ? `${t.noAccount} ` : `${t.hasAccount} `}
-          <span 
-            style={{ color: 'var(--accent)', cursor: 'pointer', fontWeight: 'bold' }}
-            onClick={() => toggleMode(!isLogin)}
-          >
-            {isLogin ? t.switchToRegister : t.switchToLogin}
-          </span>
-        </p>
+
+            {!isLogin && (
+              <div className="auth-input-group">
+                <label className="auth-label">{t.confirmPasswordLabel}</label>
+                <div className="password-input-wrapper">
+                  <input 
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    required
+                    placeholder={t.confirmPasswordPlaceholder}
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className="auth-input"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="auth-password-toggle"
+                  >
+                    {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
+              </div>
+            )}
+            
+            <button type="submit" disabled={isLoading} className="btn-auth-submit">
+              {isLoading ? <Loader2 className="animate-spin" size={20} /> : (isLogin ? t.loginButton : t.registerButton)}
+            </button>
+          </form>
+
+          <p className="auth-switch">
+            {isLogin ? `${t.noAccount} ` : `${t.hasAccount} `}
+            <span onClick={() => toggleMode(!isLogin)}>
+              {isLogin ? t.switchToRegister : t.switchToLogin}
+            </span>
+          </p>
+        </div>
       </div>
     </div>
   );

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -9,6 +9,7 @@ from app.models.transaction import Transaction
 from app.api.dependencies import get_current_user
 from app.core import security
 from app.utils.email import send_verification_email, send_account_deletion_email
+from app.core.rate_limit import limiter
 import jwt
 
 router = APIRouter(
@@ -17,7 +18,8 @@ router = APIRouter(
 )
 
 @router.post("/", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
-def create_user(user: UserCreate, db: Session = Depends(get_db)):
+@limiter.limit("5/minute")
+def create_user(request: Request, user: UserCreate, db: Session = Depends(get_db)):
     # Verificamos si el email ya existe para evitar errores en la DB
     db_user = db.query(User).filter(User.email == user.email).first()
     if db_user:

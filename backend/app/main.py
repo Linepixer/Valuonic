@@ -1,5 +1,7 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
 from contextlib import asynccontextmanager
 from app.api import users, auth, portfolio, transactions, assets, admin, corporate_events
 from app.scheduler import start_scheduler, stop_scheduler
@@ -10,8 +12,12 @@ async def lifespan(app: FastAPI):
     yield
     stop_scheduler()
 
+from app.core.rate_limit import limiter
+
 app = FastAPI(title="LedgerView API", lifespan=lifespan)
 
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 import os
 
 # Configurar CORS (fallback a localhost en dev)

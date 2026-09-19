@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Routes, Route, useNavigate, useLocation, Navigate } from 'react-router-dom'
+import { Loader2 } from 'lucide-react'
 import Dashboard from './components/Dashboard'
 import Auth from './components/Auth'
 import ForgotPassword from './components/ForgotPassword'
@@ -14,7 +15,8 @@ import api from './api'
 import './index.css'
 
 function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(!!localStorage.getItem('token'))
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [isInitializing, setIsInitializing] = useState(true)
   const [currency, setCurrency] = useState('USD')
   const [user, setUser] = useState(null)
   const [verificationMessage, setVerificationMessage] = useState('')
@@ -31,19 +33,27 @@ function App() {
     // Only try to verify if they landed on the root or were redirected to login
     if (tokenParams && (currentPath === '/' || currentPath === '/login')) {
       verifyEmail(tokenParams)
-      // Strip the token from the URL so it doesn't linger
       navigate(currentPath, { replace: true })
+    } else {
+      // Otherwise, just check if we have a valid session cookie
+      checkSession()
     }
+  }, []) // Empty dependency array is intentional for initial load
 
-    const token = localStorage.getItem('token')
-    if (token) {
+  const checkSession = async () => {
+    try {
+      const res = await api.get('/users/me')
+      setUser(res.data)
       setIsAuthenticated(true)
-      fetchUser()
       if (currentPath === '/login' || currentPath === '/signup') {
         navigate('/', { replace: true })
       }
+    } catch (err) {
+      setIsAuthenticated(false)
+    } finally {
+      setIsInitializing(false)
     }
-  }, []) // Empty dependency array is intentional for initial load
+  }
 
   const fetchUser = async () => {
     try {
@@ -56,40 +66,50 @@ function App() {
 
   const verifyEmail = async (verificationToken) => {
     try {
-      const res = await api.post(`/verify?token=${verificationToken}`)
+      await api.post(`/verify?token=${verificationToken}`)
       setVerificationMessage('¡Cuenta verificada exitosamente!')
-      if (res.data.access_token) {
-        localStorage.setItem('token', res.data.access_token)
-        setIsAuthenticated(true)
-        fetchUser()
-      }
+      // verify endpoint sets the cookie for us, so we can checkSession
+      checkSession()
     } catch (err) {
       setVerificationMessage('El link de verificación es inválido o expiró.')
+      setIsInitializing(false)
     }
   }
 
   const clearSession = () => {
-    localStorage.removeItem('token')
     setIsAuthenticated(false)
     setUser(null)
   }
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      await api.post('/logout')
+    } catch (err) {
+      console.error('Error logging out', err)
+    }
     clearSession()
     navigate('/login', { replace: true })
   }
 
   const onLoginSuccess = () => {
-    setIsAuthenticated(true)
-    fetchUser()
-    navigate('/', { replace: true })
+    checkSession()
   }
 
   const isLandingPage = currentPath === '/'
+  const isAuthPage = currentPath === '/login' || currentPath === '/signup'
+  const isFullscreenPage = isLandingPage || isAuthPage
+
+  if (isInitializing) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#050505', color: '#10B981' }}>
+        <Loader2 className="animate-spin" size={48} />
+      </div>
+    )
+  }
 
   return (
-    <div className={isLandingPage ? "" : "app-container"}>
-      {!isLandingPage && (
+    <div className={isFullscreenPage ? "" : "app-container"}>
+      {!isFullscreenPage && (
         <header>
           <div 
             className="logo-text" 
@@ -113,7 +133,7 @@ function App() {
         </header>
       )}
 
-      <main>
+      <main style={isFullscreenPage ? { flex: 1, display: 'flex', flexDirection: 'column', padding: 0, margin: 0, maxWidth: '100%' } : {}}>
         {verificationMessage && (
           <div style={{ maxWidth: '500px', margin: '0 auto 20px auto' }}>
              <div className={`badge ${verificationMessage.includes('exitosamente') ? 'badge-profit' : 'badge-loss'}`} style={{ display: 'block', padding: '1rem', textAlign: 'center', fontSize: '1rem' }}>
@@ -157,7 +177,7 @@ function App() {
         </Routes>
       </main>
 
-      {isAuthenticated && !isLandingPage && (
+      {isAuthenticated && !isFullscreenPage && (
         <footer className="app-footer">
           <div style={{ maxWidth: '400px', lineHeight: '1.4' }}>LedgerView &copy; 2026 &mdash; Proyecto de código abierto para seguimiento de inversiones personales.</div>
           <div>Contacto: <a href="mailto:diazmatias@linepixer.com" style={{ color: 'inherit', textDecoration: 'none' }}>diazmatias@linepixer.com</a></div>
