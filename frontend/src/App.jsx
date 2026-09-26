@@ -46,7 +46,7 @@ function App() {
       setUser(res.data)
       setIsAuthenticated(true)
       if (currentPath === '/login' || currentPath === '/signup') {
-        navigate('/', { replace: true })
+        navigate('/portfolio', { replace: true })
       }
     } catch (err) {
       setIsAuthenticated(false)
@@ -148,6 +148,9 @@ function App() {
           
           {isAuthenticated ? (
             <>
+              <Route path="/login" element={<Navigate to="/portfolio" replace />} />
+              <Route path="/signup" element={<Navigate to="/portfolio" replace />} />
+              
               <Route path="/admin" element={<AdminDashboard user={user} />} />
               <Route path="/admin/delete-account" element={<DeleteAccountConfirm user={user} />} />
               
