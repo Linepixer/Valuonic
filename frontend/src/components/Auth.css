@@ -1,15 +1,24 @@
 /* Auth.css - Refined Grid Layout */
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap');
 
+body:has(.auth-layout) {
+  overflow: hidden !important;
+  padding-bottom: 0 !important;
+}
+
 .auth-layout {
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   background-color: #080B0E;
   font-family: 'Inter', -apple-system, sans-serif;
   color: #e0e3e7;
-  position: relative;
-  overflow: hidden;
+  overflow-y: auto;
+  z-index: 9999;
 }
 
 h1, h2, h3, h4, h5, h6, .auth-visual-title, .auth-title {
@@ -448,9 +457,15 @@ h1, h2, h3, h4, h5, h6, .auth-visual-title, .auth-title {
 }
 
 @media (max-width: 900px) {
+  .auth-ambient-glow {
+    background: 
+      radial-gradient(ellipse 60% 60% at 85% 15%, rgba(16, 185, 129, 0.05), transparent 60%),
+      radial-gradient(ellipse 60% 60% at 15% 85%, rgba(16, 185, 129, 0.05), transparent 60%);
+  }
   .auth-header {
-    justify-content: center;
-    border-bottom: none;
+    justify-content: flex-start;
+    height: 70px;
+    padding: 0 1.5rem;
   }
   .auth-main {
     flex-direction: column;
@@ -459,15 +474,43 @@ h1, h2, h3, h4, h5, h6, .auth-visual-title, .auth-title {
     display: none;
   }
   .auth-right {
-    padding: 2rem;
+    padding: 1rem 1.5rem;
   }
   .auth-footer {
     flex-direction: column;
     justify-content: center;
     gap: 0.5rem;
     height: auto;
-    padding: 2rem;
-    border-top: none;
+    padding: 1rem 1.5rem;
     text-align: center;
+  }
+  /* Make vertical spacing more compact to avoid scroll */
+  .auth-subtitle {
+    margin-bottom: 1.5rem;
+  }
+  .auth-divider {
+    margin: 1.5rem 0;
+  }
+  .auth-input-group {
+    margin-bottom: 1rem;
+  }
+  .auth-remember-me {
+    margin-bottom: 1rem;
+  }
+  .auth-switch {
+    margin-top: 1rem;
+  }
+}
+
+/* Escalamiento dinámico para pantallas grandes (1080p y 2K) */
+@media (min-width: 1900px) {
+  .auth-layout {
+    zoom: 1.15;
+  }
+}
+
+@media (min-width: 2500px) {
+  .auth-layout {
+    zoom: 1.35;
   }
 }
