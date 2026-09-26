@@ -528,3 +528,66 @@ select.auth-input option {
     zoom: 1.25;
   }
 }
+
+/* Staggered Entry Animations */
+@keyframes slideInLeft {
+  0% {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInRight {
+  0% {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.auth-visual-content > h1,
+.auth-visual-content > p,
+.auth-features-list > li {
+  animation: slideInLeft 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+  opacity: 0;
+}
+
+.auth-form-container > h2,
+.auth-form-container > p,
+.auth-form-container > button,
+.auth-form-container > div,
+.auth-form-container > form > div,
+.auth-form-container > form > button {
+  animation: slideInRight 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+  opacity: 0;
+}
+
+/* Left Panel */
+.auth-visual-content > h1 { animation-delay: 0.1s; }
+.auth-visual-content > p { animation-delay: 0.2s; }
+.auth-features-list > li:nth-child(1) { animation-delay: 0.3s; }
+.auth-features-list > li:nth-child(2) { animation-delay: 0.4s; }
+.auth-features-list > li:nth-child(3) { animation-delay: 0.5s; }
+.auth-features-list > li:nth-child(4) { animation-delay: 0.6s; }
+
+/* Right Panel */
+.auth-form-container > h2 { animation-delay: 0.1s; }
+.auth-form-container > p { animation-delay: 0.15s; }
+.auth-form-container > .btn-google { animation-delay: 0.2s; }
+.auth-form-container > .auth-divider { animation-delay: 0.25s; }
+.auth-form-container > form > div:nth-child(1) { animation-delay: 0.3s; }
+.auth-form-container > form > div:nth-child(2) { animation-delay: 0.35s; }
+.auth-form-container > form > div:nth-child(3) { animation-delay: 0.4s; }
+.auth-form-container > form > div:nth-child(4) { animation-delay: 0.45s; }
+.auth-form-container > form > div:nth-child(5) { animation-delay: 0.5s; }
+.auth-form-container > form > div:nth-child(6) { animation-delay: 0.55s; }
+.auth-form-container > form > div:nth-child(7) { animation-delay: 0.6s; }
+.auth-form-container > form > button { animation-delay: 0.65s; }
+.auth-form-container > .auth-switch { animation-delay: 0.7s; }

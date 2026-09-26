@@ -175,9 +175,9 @@ export default function Auth({ onLogin }) {
 
         {/* Right Panel */}
         <div className="auth-right">
-          <div className="auth-form-container">
+          <div className="auth-form-container" key={isLogin ? 'login' : 'signup'}>
             <h2 className="auth-title">{isLogin ? "Ingresá a tu cuenta" : "Creá tu cuenta"}</h2>
-            <p className="auth-subtitle">{isLogin ? "Ingresá tus credenciales para continuar." : "Ingresá tus datos para comenzar."}</p>
+            <p className="auth-subtitle">{isLogin ? "Ingresá tus credenciales para continuar." : "Ingresá tus datos para registrarte."}</p>
 
             <button className="btn-google" type="button" disabled>
               <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" />
