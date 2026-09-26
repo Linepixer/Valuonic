@@ -20,7 +20,7 @@ export default function Auth({ onLogin }) {
   const [isLoading, setIsLoading] = useState(false);
   const [isResending, setIsResending] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(true);
+  const [rememberMe, setRememberMe] = useState(false);
 
   const [name, setName] = useState('');
   const [bYear, setBYear] = useState('');
@@ -176,12 +176,12 @@ export default function Auth({ onLogin }) {
         {/* Right Panel */}
         <div className="auth-right">
           <div className="auth-form-container">
-            <h2 className="auth-title">{isLogin ? "Ingresá a tu cuenta" : t.registerTitle}</h2>
-            <p className="auth-subtitle">{isLogin ? "Ingresá tus credenciales para continuar." : t.registerSubtitle || "Comenzá a medir tu rendimiento real hoy."}</p>
+            <h2 className="auth-title">{isLogin ? "Ingresá a tu cuenta" : "Creá tu cuenta"}</h2>
+            <p className="auth-subtitle">{isLogin ? "Ingresá tus credenciales para continuar." : "Ingresá tus datos para comenzar."}</p>
 
             <button className="btn-google" type="button" disabled>
               <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" />
-              {isLogin ? "Continuar con Google" : "Registrarse con Google"}
+              Continuar con Google
             </button>
 
             <div className="auth-divider">o continuá con email</div>
@@ -204,44 +204,42 @@ export default function Auth({ onLogin }) {
               {!isLogin && (
                 <>
                   <div className="auth-input-group">
-                    <label className="auth-label">{t.nameLabel}</label>
+                    <label className="auth-label">NOMBRE COMPLETO</label>
                     <input
                       type="text"
                       required
-                      placeholder={t.namePlaceholder}
+                      placeholder="¿Cómo te llamas?"
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                       className="auth-input"
                     />
                   </div>
-                  <div style={{ display: 'flex', gap: '1rem' }}>
-                    <div className="auth-input-group" style={{ flex: 1.5 }}>
-                      <label className="auth-label">{t.birthDateLabel}</label>
-                      <div className="auth-date-group">
-                        <select value={bDay} onChange={(e) => setBDay(e.target.value)} required>
-                          <option value="" disabled hidden>{t.day}</option>
-                          {days.map(d => <option key={d} value={d}>{d}</option>)}
-                        </select>
-                        <select value={bMonth} onChange={(e) => setBMonth(e.target.value)} required>
-                          <option value="" disabled hidden>{t.month}</option>
-                          {t.months.map((m, i) => <option key={i} value={i + 1}>{m}</option>)}
-                        </select>
-                        <select value={bYear} onChange={(e) => setBYear(e.target.value)} required>
-                          <option value="" disabled hidden>{t.year}</option>
-                          {years.map(y => <option key={y} value={y}>{y}</option>)}
-                        </select>
-                      </div>
+                  <div className="auth-input-group">
+                    <label className="auth-label">FECHA DE NACIMIENTO</label>
+                    <div className="auth-date-group">
+                      <select value={bDay} onChange={(e) => setBDay(e.target.value)} required className="auth-input">
+                        <option value="" disabled hidden>Día</option>
+                        {days.map(d => <option key={d} value={d}>{d}</option>)}
+                      </select>
+                      <select value={bMonth} onChange={(e) => setBMonth(e.target.value)} required className="auth-input">
+                        <option value="" disabled hidden>Mes</option>
+                        {t.months.map((m, i) => <option key={i} value={i + 1}>{m}</option>)}
+                      </select>
+                      <select value={bYear} onChange={(e) => setBYear(e.target.value)} required className="auth-input">
+                        <option value="" disabled hidden>Año</option>
+                        {years.map(y => <option key={y} value={y}>{y}</option>)}
+                      </select>
                     </div>
                   </div>
                   <div className="auth-input-group">
-                    <label className="auth-label">{t.countryLabel}</label>
+                    <label className="auth-label">PAÍS</label>
                     <select
                       value={country}
                       onChange={(e) => setCountry(e.target.value)}
                       className="auth-input"
                       required
                     >
-                      <option value="" disabled hidden>{t.countryPlaceholder}</option>
+                      <option value="" disabled hidden>¿De dónde eres?</option>
                       {Object.entries(t.countries).map(([code, countryName]) => (
                         <option key={code} value={countryName}>{countryName}</option>
                       ))}
@@ -255,7 +253,7 @@ export default function Auth({ onLogin }) {
                 <input
                   type="email"
                   required
-                  placeholder={isLogin ? "Escribe tu email" : t.emailPlaceholder}
+                  placeholder={isLogin ? "Escribe tu email" : "¿Cuál es tu email?"}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="auth-input"
@@ -279,7 +277,7 @@ export default function Auth({ onLogin }) {
                   <input
                     type={showPassword ? 'text' : 'password'}
                     required
-                    placeholder={isLogin ? "Escribe tu contraseña" : t.passwordPlaceholder}
+                    placeholder={isLogin ? "Escribe tu contraseña" : "Escribe una contraseña"}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     className="auth-input"
@@ -311,30 +309,42 @@ export default function Auth({ onLogin }) {
               )}
 
               {!isLogin && (
-                <div className="auth-input-group">
-                  <label className="auth-label">{t.confirmPasswordLabel}</label>
-                  <div className="password-input-wrapper">
-                    <input
-                      type={showConfirmPassword ? 'text' : 'password'}
-                      required
-                      placeholder={t.confirmPasswordPlaceholder}
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      className="auth-input"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      className="auth-password-toggle"
-                    >
-                      {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                    </button>
+                <>
+                  <div className="auth-input-group">
+                    <label className="auth-label">CONFIRMAR CONTRASEÑA</label>
+                    <div className="password-input-wrapper">
+                      <input
+                        type={showConfirmPassword ? 'text' : 'password'}
+                        required
+                        placeholder="Vuelve a escribir tu contraseña"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        className="auth-input"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        className="auth-password-toggle"
+                      >
+                        {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                      </button>
+                    </div>
                   </div>
-                </div>
+
+                  <div className="auth-remember-me" style={{ marginTop: '0.5rem' }}>
+                    <label className="checkbox-container">
+                      <input type="checkbox" required />
+                      <span className="checkmark">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                      </span>
+                      <span>Acepto los <span style={{ color: '#10B981', cursor: 'pointer' }}>Términos de servicio</span> y la <span style={{ color: '#10B981', cursor: 'pointer' }}>Política de privacidad</span></span>
+                    </label>
+                  </div>
+                </>
               )}
 
               <button type="submit" disabled={isLoading} className="btn-auth-submit">
-                {isLoading ? <Loader2 className="animate-spin" size={20} /> : (isLogin ? "Ingresar" : t.registerButton)}
+                {isLoading ? <Loader2 className="animate-spin" size={20} /> : (isLogin ? "Ingresar" : "Crear cuenta")}
               </button>
             </form>
 
