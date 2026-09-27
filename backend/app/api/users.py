@@ -18,7 +18,7 @@ router = APIRouter(
 )
 
 @router.post("/", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
-@limiter.limit("5/minute")
+@limiter.limit("20/minute")
 def create_user(request: Request, user: UserCreate, db: Session = Depends(get_db)):
     # Verificamos si el email ya existe para evitar errores en la DB
     db_user = db.query(User).filter(User.email == user.email).first()

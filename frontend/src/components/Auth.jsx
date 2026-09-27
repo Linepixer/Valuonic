@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import api from '../api';
 import es from '../locales/es.json';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
+import { useToast } from '../context/ToastContext';
 import './Auth.css';
 
 export default function Auth({ onLogin }) {
@@ -14,7 +15,7 @@ export default function Auth({ onLogin }) {
   });
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const { showToast } = useToast();
   const [needsVerification, setNeedsVerification] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -42,13 +43,11 @@ export default function Auth({ onLogin }) {
       setIsLogin(true);
     } else {
       setIsLogin(location.pathname !== '/signup');
-      setError('');
     }
   }, [location.pathname, location.search, navigate]);
 
   const toggleMode = (loginMode) => {
     setIsLogin(loginMode);
-    setError('');
     const newPath = loginMode ? '/login' : '/signup';
     if (location.pathname !== newPath) {
       navigate(newPath);
@@ -57,11 +56,10 @@ export default function Auth({ onLogin }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
     setNeedsVerification(false);
 
     if (!isLogin && password !== confirmPassword) {
-      setError(t.passwordMismatch);
+      showToast(t.passwordMismatch, 'error');
       return;
     }
 
@@ -92,14 +90,14 @@ export default function Auth({ onLogin }) {
         };
         await api.post('/users/', payload);
         setIsLogin(true);
-        setError(t.registerSuccess);
+        showToast(t.registerSuccess, 'success');
       }
     } catch (err) {
       if (err.response?.status === 403 && err.response?.data?.detail === 'not_verified') {
-        setError(t.notVerified);
+        showToast(t.notVerified, 'error');
         setNeedsVerification(true);
       } else {
-        setError(err.response?.data?.detail || t.defaultError);
+        showToast(err.response?.data?.detail || t.defaultError, 'error');
       }
     } finally {
       setIsLoading(false);
@@ -110,10 +108,10 @@ export default function Auth({ onLogin }) {
     setIsResending(true);
     try {
       await api.post('/resend-verification', { email });
-      setError(t.emailSent);
+      showToast(t.emailSent, 'success');
       setNeedsVerification(false);
     } catch (err) {
-      setError(t.defaultError);
+      showToast(t.defaultError, 'error');
     } finally {
       setIsResending(false);
     }
@@ -185,8 +183,6 @@ export default function Auth({ onLogin }) {
             </button>
 
             <div className="auth-divider">o continuá con email</div>
-
-            {error && <div className={`badge ${error.includes('exitoso') || error.includes('enviado') ? 'badge-profit' : 'badge-loss'}`} style={{ marginBottom: '1.5rem', display: 'block', padding: '0.75rem', textAlign: 'center' }}>{error}</div>}
 
             {needsVerification && (
               <button

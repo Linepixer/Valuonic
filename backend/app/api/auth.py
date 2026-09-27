@@ -30,7 +30,7 @@ def set_auth_cookie(response: Response, token: str):
     )
 
 @router.post("/login")
-@limiter.limit("5/minute")
+@limiter.limit("20/minute")
 def login(
     request: Request,
     response: Response,
@@ -155,7 +155,7 @@ def forgot_password(request: Request, body: ForgotPasswordRequest, db: Session =
     return {"message": "Si la cuenta existe, se ha enviado un correo con instrucciones."}
 
 @router.get("/reset-password/validate")
-@limiter.limit("5/minute")
+@limiter.limit("20/minute")
 def validate_reset_token(request: Request, token: str, db: Session = Depends(get_db)):
     try:
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
@@ -185,7 +185,7 @@ class ResetPasswordRequest(BaseModel):
     new_password: str
 
 @router.post("/reset-password")
-@limiter.limit("5/minute")
+@limiter.limit("20/minute")
 def reset_password(request: Request, body: ResetPasswordRequest, response: Response, db: Session = Depends(get_db)):
     try:
         payload = jwt.decode(body.token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
