@@ -2,7 +2,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap');
 
 body:has(.auth-layout) {
-  overflow: hidden !important;
   padding-bottom: 0 !important;
 }
 
@@ -17,8 +16,14 @@ body:has(.auth-layout) {
   background-color: #080B0E;
   font-family: 'Inter', -apple-system, sans-serif;
   color: #e0e3e7;
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
   z-index: 9999;
+  scrollbar-width: none;
+}
+
+.auth-layout::-webkit-scrollbar {
+  display: none;
 }
 
 h1, h2, h3, h4, h5, h6, .auth-visual-title, .auth-title {
@@ -515,6 +520,32 @@ select.auth-input option {
     margin-top: 1rem;
   }
 }
+
+/* Alturas pequeñas (Laptops de 1366x768, etc) para evitar cortes sin agregar scrollbar */
+@media (max-height: 950px) {
+  .auth-layout {
+    zoom: 0.9;
+  }
+}
+
+@media (max-height: 850px) {
+  .auth-layout {
+    zoom: 0.85;
+  }
+}
+
+@media (max-height: 750px) {
+  .auth-layout {
+    zoom: 0.8;
+  }
+}
+
+@media (max-height: 650px) {
+  .auth-layout {
+    zoom: 0.75;
+  }
+}
+
 
 /* Escalamiento dinámico para pantallas grandes (1080p y 2K) */
 @media (min-width: 1900px) {
