@@ -257,6 +257,7 @@ export default function Auth({ onLogin }) {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="auth-input"
+                  autoFocus={isLogin && window.innerWidth > 768}
                 />
               </div>
 
