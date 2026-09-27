@@ -267,6 +267,11 @@ h1, h2, h3, h4, h5, h6, .auth-visual-title, .auth-title {
   box-shadow: 0 0 0 1px rgba(16, 185, 129, 0.4);
 }
 
+.auth-input.input-error {
+  border-color: rgba(239, 68, 68, 0.6);
+  box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.6);
+}
+
 .auth-input::placeholder {
   color: #475569;
 }
@@ -357,6 +362,11 @@ select.auth-input option {
   align-items: center;
   justify-content: center;
   transition: all 0.2s;
+}
+
+.checkmark.input-error {
+  border-color: rgba(239, 68, 68, 0.6);
+  box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.6);
 }
 
 .checkbox-container input:checked ~ .checkmark {

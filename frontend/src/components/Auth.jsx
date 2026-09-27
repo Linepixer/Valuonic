@@ -16,6 +16,7 @@ export default function Auth({ onLogin }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const { showToast } = useToast();
+  const [emptyFields, setEmptyFields] = useState([]);
   const [needsVerification, setNeedsVerification] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -29,6 +30,7 @@ export default function Auth({ onLogin }) {
   const [bDay, setBDay] = useState('');
   const [country, setCountry] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [termsAccepted, setTermsAccepted] = useState(false);
 
   const t = es.auth;
 
@@ -48,6 +50,8 @@ export default function Auth({ onLogin }) {
 
   const toggleMode = (loginMode) => {
     setIsLogin(loginMode);
+    setEmptyFields([]);
+    setTermsAccepted(false);
     const newPath = loginMode ? '/login' : '/signup';
     if (location.pathname !== newPath) {
       navigate(newPath);
@@ -58,9 +62,42 @@ export default function Auth({ onLogin }) {
     e.preventDefault();
     setNeedsVerification(false);
 
-    if (!isLogin && password !== confirmPassword) {
-      showToast(t.passwordMismatch, 'error');
-      return;
+    if (isLogin) {
+      const currentEmpty = [];
+      if (!email.trim()) currentEmpty.push('email');
+      if (!password.trim()) currentEmpty.push('password');
+
+      if (currentEmpty.length > 0) {
+        setEmptyFields(currentEmpty);
+        showToast('Completa los campos requeridos para continuar', 'error');
+        return;
+      }
+    } else {
+      const currentEmpty = [];
+      if (!name.trim()) currentEmpty.push('name');
+      if (!bDay) currentEmpty.push('bDay');
+      if (!bMonth) currentEmpty.push('bMonth');
+      if (!bYear) currentEmpty.push('bYear');
+      if (!country) currentEmpty.push('country');
+      if (!email.trim()) currentEmpty.push('email');
+      if (!password.trim()) currentEmpty.push('password');
+      if (!confirmPassword.trim()) currentEmpty.push('confirmPassword');
+      if (!termsAccepted) currentEmpty.push('termsAccepted');
+      
+      if (currentEmpty.length > 0) {
+        setEmptyFields(currentEmpty);
+        if (!termsAccepted && currentEmpty.length === 1) {
+          showToast('Debes aceptar los Términos de servicio', 'error');
+        } else {
+          showToast('Completa los campos requeridos para continuar', 'error');
+        }
+        return;
+      }
+
+      if (password !== confirmPassword) {
+        showToast(t.passwordMismatch, 'error');
+        return;
+      }
     }
 
     setIsLoading(true);
@@ -196,7 +233,7 @@ export default function Auth({ onLogin }) {
               </button>
             )}
 
-            <form onSubmit={handleSubmit}>
+            <form onSubmit={handleSubmit} noValidate>
               {!isLogin && (
                 <>
                   <div className="auth-input-group">
@@ -206,22 +243,25 @@ export default function Auth({ onLogin }) {
                       required
                       placeholder="¿Cómo te llamas?"
                       value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      className="auth-input"
+                      onChange={(e) => {
+                        setName(e.target.value);
+                        if (emptyFields.includes('name')) setEmptyFields(prev => prev.filter(f => f !== 'name'));
+                      }}
+                      className={`auth-input ${emptyFields.includes('name') ? 'input-error' : ''}`}
                     />
                   </div>
                   <div className="auth-input-group">
                     <label className="auth-label">FECHA DE NACIMIENTO</label>
                     <div className="auth-date-group">
-                      <select value={bDay} onChange={(e) => setBDay(e.target.value)} required className="auth-input">
+                      <select value={bDay} onChange={(e) => { setBDay(e.target.value); if (emptyFields.includes('bDay')) setEmptyFields(prev => prev.filter(f => f !== 'bDay')); }} required className={`auth-input ${emptyFields.includes('bDay') ? 'input-error' : ''}`}>
                         <option value="" disabled hidden>Día</option>
                         {days.map(d => <option key={d} value={d}>{d}</option>)}
                       </select>
-                      <select value={bMonth} onChange={(e) => setBMonth(e.target.value)} required className="auth-input">
+                      <select value={bMonth} onChange={(e) => { setBMonth(e.target.value); if (emptyFields.includes('bMonth')) setEmptyFields(prev => prev.filter(f => f !== 'bMonth')); }} required className={`auth-input ${emptyFields.includes('bMonth') ? 'input-error' : ''}`}>
                         <option value="" disabled hidden>Mes</option>
                         {t.months.map((m, i) => <option key={i} value={i + 1}>{m}</option>)}
                       </select>
-                      <select value={bYear} onChange={(e) => setBYear(e.target.value)} required className="auth-input">
+                      <select value={bYear} onChange={(e) => { setBYear(e.target.value); if (emptyFields.includes('bYear')) setEmptyFields(prev => prev.filter(f => f !== 'bYear')); }} required className={`auth-input ${emptyFields.includes('bYear') ? 'input-error' : ''}`}>
                         <option value="" disabled hidden>Año</option>
                         {years.map(y => <option key={y} value={y}>{y}</option>)}
                       </select>
@@ -231,8 +271,11 @@ export default function Auth({ onLogin }) {
                     <label className="auth-label">PAÍS</label>
                     <select
                       value={country}
-                      onChange={(e) => setCountry(e.target.value)}
-                      className="auth-input"
+                      onChange={(e) => {
+                        setCountry(e.target.value);
+                        if (emptyFields.includes('country')) setEmptyFields(prev => prev.filter(f => f !== 'country'));
+                      }}
+                      className={`auth-input ${emptyFields.includes('country') ? 'input-error' : ''}`}
                       required
                     >
                       <option value="" disabled hidden>¿De dónde eres?</option>
@@ -251,8 +294,11 @@ export default function Auth({ onLogin }) {
                   required
                   placeholder={isLogin ? "Escribe tu email" : "¿Cuál es tu email?"}
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="auth-input"
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    if (emptyFields.includes('email')) setEmptyFields(prev => prev.filter(f => f !== 'email'));
+                  }}
+                  className={`auth-input ${emptyFields.includes('email') ? 'input-error' : ''}`}
                   autoFocus={isLogin && window.innerWidth > 768}
                 />
               </div>
@@ -276,8 +322,11 @@ export default function Auth({ onLogin }) {
                     required
                     placeholder={isLogin ? "Escribe tu contraseña" : "Escribe una contraseña"}
                     value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="auth-input"
+                    onChange={(e) => {
+                      setPassword(e.target.value);
+                      if (emptyFields.includes('password')) setEmptyFields(prev => prev.filter(f => f !== 'password'));
+                    }}
+                    className={`auth-input ${emptyFields.includes('password') ? 'input-error' : ''}`}
                   />
                   <button
                     type="button"
@@ -315,8 +364,11 @@ export default function Auth({ onLogin }) {
                         required
                         placeholder="Vuelve a escribir tu contraseña"
                         value={confirmPassword}
-                        onChange={(e) => setConfirmPassword(e.target.value)}
-                        className="auth-input"
+                        onChange={(e) => {
+                          setConfirmPassword(e.target.value);
+                          if (emptyFields.includes('confirmPassword')) setEmptyFields(prev => prev.filter(f => f !== 'confirmPassword'));
+                        }}
+                        className={`auth-input ${emptyFields.includes('confirmPassword') ? 'input-error' : ''}`}
                       />
                       <button
                         type="button"
@@ -330,9 +382,17 @@ export default function Auth({ onLogin }) {
 
                   <div className="auth-remember-me" style={{ marginTop: '0.5rem' }}>
                     <label className="checkbox-container">
-                      <input type="checkbox" required />
-                      <span className="checkmark">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                      <input 
+                        type="checkbox" 
+                        required 
+                        checked={termsAccepted}
+                        onChange={(e) => {
+                          setTermsAccepted(e.target.checked);
+                          if (emptyFields.includes('termsAccepted')) setEmptyFields(prev => prev.filter(f => f !== 'termsAccepted'));
+                        }}
+                      />
+                      <span className={`checkmark ${emptyFields.includes('termsAccepted') ? 'input-error' : ''}`}>
+                        {termsAccepted && <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>}
                       </span>
                       <span>Acepto los <span style={{ color: '#10B981', cursor: 'pointer' }}>Términos de servicio</span> y la <span style={{ color: '#10B981', cursor: 'pointer' }}>Política de privacidad</span></span>
                     </label>
