@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Routes, Route, useNavigate, useLocation, Navigate } from 'react-router-dom'
+import { Routes, Route, useNavigate, useLocation, Navigate, Link } from 'react-router-dom'
 import { Loader2 } from 'lucide-react'
 import Dashboard from './components/Dashboard'
 import Auth from './components/Auth'
@@ -11,6 +11,8 @@ import DeleteAccountConfirm from './components/DeleteAccountConfirm'
 import AccountSettings from './components/AccountSettings'
 import UserDeleteAccountConfirm from './components/UserDeleteAccountConfirm'
 import LandingPage from './components/LandingPage'
+import Terms from './components/Terms'
+import Privacy from './components/Privacy'
 import api from './api'
 import './index.css'
 
@@ -143,6 +145,8 @@ function App() {
         )}
         
         <Routes>
+          <Route path="/terms" element={<Terms />} />
+          <Route path="/privacy" element={<Privacy />} />
           <Route path="/reset-password" element={<ResetPassword onLogin={onLoginSuccess} />} />
           <Route path="/account/delete-confirm" element={<UserDeleteAccountConfirm onAccountDeleted={clearSession} />} />
           
@@ -183,7 +187,11 @@ function App() {
       {isAuthenticated && !isFullscreenPage && (
         <footer className="app-footer">
           <div style={{ maxWidth: '400px', lineHeight: '1.4' }}>LedgerView &copy; 2026 &mdash; Proyecto de código abierto para seguimiento de inversiones personales.</div>
-          <div>Contacto: <a href="mailto:diazmatias@linepixer.com" style={{ color: 'inherit', textDecoration: 'none' }}>diazmatias@linepixer.com</a></div>
+          <div>
+            <Link to="/terms" target="_blank" style={{ color: 'inherit', textDecoration: 'none', marginRight: '1rem' }}>Términos de Servicio</Link>
+            <Link to="/privacy" target="_blank" style={{ color: 'inherit', textDecoration: 'none', marginRight: '1rem' }}>Política de Privacidad</Link>
+            Contacto: <a href="mailto:diazmatias@linepixer.com" style={{ color: 'inherit', textDecoration: 'none' }}>diazmatias@linepixer.com</a>
+          </div>
         </footer>
       )}
     </div>

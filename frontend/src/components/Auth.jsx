@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import api from '../api';
 import es from '../locales/es.json';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
@@ -394,7 +394,7 @@ export default function Auth({ onLogin }) {
                       <span className={`checkmark ${emptyFields.includes('termsAccepted') ? 'input-error' : ''}`}>
                         {termsAccepted && <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>}
                       </span>
-                      <span>Acepto los <span style={{ color: '#10B981', cursor: 'pointer' }}>Términos de servicio</span> y la <span style={{ color: '#10B981', cursor: 'pointer' }}>Política de privacidad</span></span>
+                      <span>Acepto los <Link to="/terms" target="_blank" style={{ color: '#10B981', textDecoration: 'none' }}>Términos de servicio</Link> y la <Link to="/privacy" target="_blank" style={{ color: '#10B981', textDecoration: 'none' }}>Política de privacidad</Link></span>
                     </label>
                   </div>
                 </>
@@ -421,7 +421,9 @@ export default function Auth({ onLogin }) {
           LedgerView &copy; 2026 &mdash; Proyecto de código abierto para seguimiento de inversiones personales.
         </div>
         <div className="auth-footer-right-text">
-          Contacto: diazmatias@linepixer.com
+          <Link to="/terms" target="_blank" style={{ color: 'inherit', textDecoration: 'none', marginRight: '1rem' }}>Términos de Servicio</Link>
+          <Link to="/privacy" target="_blank" style={{ color: 'inherit', textDecoration: 'none', marginRight: '1rem' }}>Política de Privacidad</Link>
+          Contacto: <a href="mailto:diazmatias@linepixer.com" style={{ color: 'inherit', textDecoration: 'none' }}>diazmatias@linepixer.com</a>
         </div>
       </footer>
     </div>
