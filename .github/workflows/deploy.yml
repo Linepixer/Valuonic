@@ -8,8 +8,8 @@ on:
 env:
   REGISTRY: ghcr.io
   # Use lowercase for repo names in Docker tags to avoid invalid reference format
-  IMAGE_NAME_API: linepixer/ledgerview-api
-  IMAGE_NAME_WEB: linepixer/ledgerview-web
+  IMAGE_NAME_API: linepixer/valuonic-api
+  IMAGE_NAME_WEB: linepixer/valuonic-web
 
 jobs:
   build-and-push:
@@ -61,4 +61,4 @@ jobs:
           tags: ${{ steps.meta-web.outputs.tags }}
           labels: ${{ steps.meta-web.outputs.labels }}
           build-args: |
-            VITE_API_URL=https://ledger.linepixer.com/api
+            VITE_API_URL=https://valuonic.linepixer.com/api
