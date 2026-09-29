@@ -1,10 +1,10 @@
-# ledgerview
-Open-source portfolio tracker for managing investments using a transaction ledger.
+# valuonic
+Open-source portfolio tracker for managing investments using a transaction valuonic.
 
 ## Features
 - **Dual Currency Tracking**: Tracks portfolio in both ARS and USD simultaneously.
 - **Automated Pricing**: Fetches real-time prices for Stocks (via yfinance), Crypto (via Binance), and Argentina Dollar Exchange Rates (via DolarAPI).
-- **Ledger-based**: Your entire portfolio balance and performance are derived accurately from your transaction history.
+- **Valuonic-based**: Your entire portfolio balance and performance are derived accurately from your transaction history.
 
 ## Getting Started
 

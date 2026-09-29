@@ -1,7 +1,7 @@
 services:
   db:
     image: postgres:15-alpine
-    container_name: ledgerview-db
+    container_name: valuonic-db
     env_file:
       - .env
     ports:
@@ -13,7 +13,7 @@ services:
   api:
     build:
       context: ./backend
-    container_name: ledgerview-api
+    container_name: valuonic-api
     env_file:
       - .env
     environment:
@@ -31,7 +31,7 @@ services:
       args:
         # API URL accessible from the client's browser
         - VITE_API_URL=http://localhost:8000
-    container_name: ledgerview-web
+    container_name: valuonic-web
     ports:
       - "3000:80"
     depends_on:

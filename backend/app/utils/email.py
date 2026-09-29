@@ -86,18 +86,18 @@ def send_verification_email(to_email: str, token: str) -> None:
     <body>
         <div class="container">
             <div class="logo">
-                <img src="https://ledger.linepixer.com/logo.png" alt="LV" width="32" height="32" style="width: 32px; height: 32px; margin-right: 10px; display: inline-block; vertical-align: middle;">
-                <span style="vertical-align: middle;">LedgerView</span>
+                <img src="https://valuonic.linepixer.com/logo.png" alt="LV" width="32" height="32" style="width: 32px; height: 32px; margin-right: 10px; display: inline-block; vertical-align: middle;">
+                <span style="vertical-align: middle;">Valuonic</span>
             </div>
             <h2>Confirma tu dirección de email</h2>
             <p>
-                Gracias por registrarte en LedgerView. Para empezar a hacer un seguimiento de tus inversiones y acceder a tu dashboard, necesitamos que valides tu cuenta.
+                Gracias por registrarte en Valuonic. Para empezar a hacer un seguimiento de tus inversiones y acceder a tu dashboard, necesitamos que valides tu cuenta.
             </p>
             <a href="{verification_link}" class="button">Verificar mi cuenta</a>
             
             <div class="footer">
                 Si no solicitaste crear una cuenta, puedes ignorar este correo.<br>
-                LedgerView &copy; 2026
+                Valuonic &copy; 2026
             </div>
         </div>
     </body>
@@ -114,8 +114,8 @@ def send_verification_email(to_email: str, token: str) -> None:
             msg = EmailMessage()
             msg.set_content("Por favor verifica tu correo usando este enlace: " + verification_link)
             msg.add_alternative(html_content, subtype='html')
-            msg['Subject'] = 'LedgerView - Verifica tu cuenta'
-            msg['From'] = f"LedgerView <{smtp_user}>"
+            msg['Subject'] = 'Valuonic - Verifica tu cuenta'
+            msg['From'] = f"Valuonic <{smtp_user}>"
             msg['To'] = to_email
 
             with smtplib.SMTP_SSL(smtp_host, smtp_port) as server:
@@ -130,7 +130,7 @@ def send_verification_email(to_email: str, token: str) -> None:
         print("MOCK EMAIL VERIFICATION")
         print("="*50)
         print(f"To: {to_email}")
-        print(f"Subject: LedgerView - Verifica tu cuenta")
+        print(f"Subject: Valuonic - Verifica tu cuenta")
         print(f"Verification Link: {verification_link}")
         print("="*50 + "\n")
 
@@ -216,8 +216,8 @@ def send_password_reset_email(to_email: str, token: str) -> None:
     <body>
         <div class="container">
             <div class="logo">
-                <img src="https://ledger.linepixer.com/logo.png" alt="LV" width="32" height="32" style="width: 32px; height: 32px; margin-right: 10px; display: inline-block; vertical-align: middle;">
-                <span style="vertical-align: middle;">LedgerView</span>
+                <img src="https://valuonic.linepixer.com/logo.png" alt="LV" width="32" height="32" style="width: 32px; height: 32px; margin-right: 10px; display: inline-block; vertical-align: middle;">
+                <span style="vertical-align: middle;">Valuonic</span>
             </div>
             <h2>Restablece tu contraseña</h2>
             <p>
@@ -227,7 +227,7 @@ def send_password_reset_email(to_email: str, token: str) -> None:
             
             <div class="footer">
                 Si no solicitaste un restablecimiento de contraseña, puedes ignorar este correo.<br>
-                LedgerView &copy; 2026
+                Valuonic &copy; 2026
             </div>
         </div>
     </body>
@@ -244,8 +244,8 @@ def send_password_reset_email(to_email: str, token: str) -> None:
             msg = EmailMessage()
             msg.set_content("Por favor restablece tu contraseña usando este enlace: " + reset_link)
             msg.add_alternative(html_content, subtype='html')
-            msg['Subject'] = 'LedgerView - Restablece tu contraseña'
-            msg['From'] = f"LedgerView <{smtp_user}>"
+            msg['Subject'] = 'Valuonic - Restablece tu contraseña'
+            msg['From'] = f"Valuonic <{smtp_user}>"
             msg['To'] = to_email
 
             with smtplib.SMTP_SSL(smtp_host, smtp_port) as server:
@@ -260,7 +260,7 @@ def send_password_reset_email(to_email: str, token: str) -> None:
         print("MOCK PASSWORD RESET EMAIL")
         print("="*50)
         print(f"To: {to_email}")
-        print(f"Subject: LedgerView - Restablece tu contraseña")
+        print(f"Subject: Valuonic - Restablece tu contraseña")
         print(f"Reset Link: {reset_link}")
         print("="*50 + "\n")
 
@@ -348,8 +348,8 @@ def send_admin_account_deletion_email(admin_email: str, token: str, user_to_dele
     <body>
         <div class="container">
             <div class="logo">
-                <img src="https://ledger.linepixer.com/logo.png" alt="LV" width="32" height="32" style="width: 32px; height: 32px; margin-right: 10px; display: inline-block; vertical-align: middle;">
-                <span style="vertical-align: middle;">LedgerView</span>
+                <img src="https://valuonic.linepixer.com/logo.png" alt="LV" width="32" height="32" style="width: 32px; height: 32px; margin-right: 10px; display: inline-block; vertical-align: middle;">
+                <span style="vertical-align: middle;">Valuonic</span>
             </div>
             <h2>Confirmar eliminación de cuenta</h2>
             <p>
@@ -360,7 +360,7 @@ def send_admin_account_deletion_email(admin_email: str, token: str, user_to_dele
             
             <div class="footer">
                 Si no solicitaste esta acción, por favor ignora este correo.<br>
-                LedgerView &copy; 2026
+                Valuonic &copy; 2026
             </div>
         </div>
     </body>
@@ -377,8 +377,8 @@ def send_admin_account_deletion_email(admin_email: str, token: str, user_to_dele
             msg = EmailMessage()
             msg.set_content(f"Por favor confirma la eliminación de la cuenta {user_to_delete_email} usando este enlace: {deletion_link}")
             msg.add_alternative(html_content, subtype='html')
-            msg['Subject'] = 'LedgerView - Confirmar eliminación de cuenta'
-            msg['From'] = f"LedgerView <{smtp_user}>"
+            msg['Subject'] = 'Valuonic - Confirmar eliminación de cuenta'
+            msg['From'] = f"Valuonic <{smtp_user}>"
             msg['To'] = admin_email
 
             with smtplib.SMTP_SSL(smtp_host, smtp_port) as server:
@@ -393,7 +393,7 @@ def send_admin_account_deletion_email(admin_email: str, token: str, user_to_dele
         print("MOCK ACCOUNT DELETION EMAIL")
         print("="*50)
         print(f"To: {admin_email}")
-        print(f"Subject: LedgerView - Solicitud de eliminación de cuenta")
+        print(f"Subject: Valuonic - Solicitud de eliminación de cuenta")
         print(f"User to Delete: {user_to_delete_email}")
         print(f"Deletion Link: {deletion_link}")
         print("="*50 + "\n")
@@ -478,8 +478,8 @@ def send_account_deletion_email(to_email: str, token: str) -> None:
     <body>
         <div class="container">
             <div class="logo">
-                <img src="https://ledger.linepixer.com/logo.png" alt="LV" width="32" height="32" style="width: 32px; height: 32px; margin-right: 10px; display: inline-block; vertical-align: middle;">
-                <span style="vertical-align: middle;">LedgerView</span>
+                <img src="https://valuonic.linepixer.com/logo.png" alt="LV" width="32" height="32" style="width: 32px; height: 32px; margin-right: 10px; display: inline-block; vertical-align: middle;">
+                <span style="vertical-align: middle;">Valuonic</span>
             </div>
             <h2>Solicitud de eliminación de cuenta</h2>
             <p>
@@ -489,7 +489,7 @@ def send_account_deletion_email(to_email: str, token: str) -> None:
             
             <div class="footer">
                 Si no solicitaste eliminar tu cuenta, puedes ignorar este correo.<br>
-                LedgerView &copy; 2026
+                Valuonic &copy; 2026
             </div>
         </div>
     </body>
@@ -506,8 +506,8 @@ def send_account_deletion_email(to_email: str, token: str) -> None:
             msg = EmailMessage()
             msg.set_content("Por favor confirma la eliminación de tu cuenta usando este enlace: " + deletion_link)
             msg.add_alternative(html_content, subtype='html')
-            msg['Subject'] = 'LedgerView - Confirma la eliminación de tu cuenta'
-            msg['From'] = f"LedgerView <{smtp_user}>"
+            msg['Subject'] = 'Valuonic - Confirma la eliminación de tu cuenta'
+            msg['From'] = f"Valuonic <{smtp_user}>"
             msg['To'] = to_email
 
             with smtplib.SMTP_SSL(smtp_host, smtp_port) as server:
@@ -522,6 +522,6 @@ def send_account_deletion_email(to_email: str, token: str) -> None:
         print("MOCK USER ACCOUNT DELETION EMAIL")
         print("="*50)
         print(f"To: {to_email}")
-        print(f"Subject: LedgerView - Confirma la eliminación de tu cuenta")
+        print(f"Subject: Valuonic - Confirma la eliminación de tu cuenta")
         print(f"Deletion Link: {deletion_link}")
         print("="*50 + "\n")

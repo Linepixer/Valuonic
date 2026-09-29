@@ -159,8 +159,8 @@ export default function Auth({ onLogin }) {
       {/* Top Header Grid Line */}
       <header className="auth-header">
         <div className="auth-logo" onClick={() => navigate('/')}>
-          <img src="/logo.png" alt="LedgerView Logo" style={{ height: '24px' }} />
-          <span style={{ fontSize: '1.25rem', fontWeight: 600, letterSpacing: '-0.02em', color: '#fff' }}>LedgerView</span>
+          <img src="/logo.png" alt="Valuonic Logo" style={{ height: '24px' }} />
+          <span style={{ fontSize: '1.25rem', fontWeight: 600, letterSpacing: '-0.02em', color: '#fff' }}>Valuonic</span>
         </div>
       </header>
 
@@ -418,7 +418,7 @@ export default function Auth({ onLogin }) {
       {/* Bottom Footer Grid Line */}
       <footer className="auth-footer">
         <div className="auth-footer-left-text">
-          LedgerView &copy; 2026 &mdash; Proyecto de código abierto para seguimiento de inversiones personales.
+          Valuonic &copy; 2026 &mdash; Proyecto de código abierto para seguimiento de inversiones personales.
         </div>
         <div className="auth-footer-right-text">
           <Link to="/terms" target="_blank" style={{ color: 'inherit', textDecoration: 'none', marginRight: '1rem' }}>Términos de Servicio</Link>

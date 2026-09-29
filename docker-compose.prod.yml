@@ -1,7 +1,7 @@
 services:
   db:
     image: postgres:15-alpine
-    container_name: ledgerview-db
+    container_name: valuonic-db
     env_file:
       - .env
     volumes:
@@ -9,8 +9,8 @@ services:
     restart: unless-stopped
 
   api:
-    image: ghcr.io/linepixer/ledgerview-api:latest
-    container_name: ledgerview-api
+    image: ghcr.io/linepixer/valuonic-api:latest
+    container_name: valuonic-api
     env_file:
       - .env
     environment:
@@ -22,8 +22,8 @@ services:
     restart: unless-stopped
 
   web:
-    image: ghcr.io/linepixer/ledgerview-web:latest
-    container_name: ledgerview-web
+    image: ghcr.io/linepixer/valuonic-web:latest
+    container_name: valuonic-web
     ports:
       - "127.0.0.1:3000:80"
     depends_on:
@@ -35,7 +35,7 @@ services:
     container_name: watchtower
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-    command: --interval 300 ledgerview-api ledgerview-web
+    command: --interval 300 valuonic-api valuonic-web
     environment:
       - DOCKER_API_VERSION=1.40
     restart: unless-stopped

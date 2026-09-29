@@ -12,8 +12,8 @@ export default function LandingPage({ isAuthenticated, user, onLogout }) {
       {/* Navbar */}
       <nav className="landing-navbar">
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer' }} onClick={() => window.scrollTo(0, 0)}>
-          <img src="/logo.png" alt="LedgerView Logo" style={{ height: '32px' }} />
-          <span style={{ fontSize: '1.25rem', fontWeight: 700, letterSpacing: '-0.05em' }}>LedgerView</span>
+          <img src="/logo.png" alt="Valuonic Logo" style={{ height: '32px' }} />
+          <span style={{ fontSize: '1.25rem', fontWeight: 700, letterSpacing: '-0.05em' }}>Valuonic</span>
         </div>
         <div className="landing-nav-links">
           {isAuthenticated ? (
@@ -55,8 +55,8 @@ export default function LandingPage({ isAuthenticated, user, onLogout }) {
         <div className="hero-mockup-container animate-landing" style={{ animationDelay: '0.6s' }}>
           <div className="hero-mockup-glow"></div>
           <div className="hero-mockup">
-            <img src="/dashboard-pc.png?v=2" alt="LedgerView Dashboard en Computadora" className="mockup-img-pc" />
-            <img src="/dashboard-mobile.png?v=2" alt="LedgerView Dashboard en Celular" className="mockup-img-mobile" />
+            <img src="/dashboard-pc.png?v=2" alt="Valuonic Dashboard en Computadora" className="mockup-img-pc" />
+            <img src="/dashboard-mobile.png?v=2" alt="Valuonic Dashboard en Celular" className="mockup-img-mobile" />
           </div>
         </div>
       </section>
@@ -78,7 +78,7 @@ export default function LandingPage({ isAuthenticated, user, onLogout }) {
             </div>
             <h3>Multidivisa Inteligente</h3>
             <p>
-              Cambiá toda la visualización de tu portafolio entre Pesos (ARS) y Dólares (USD) con un solo clic. LedgerView toma las cotizaciones de Dólar Cripto, MEP y Blue en tiempo real para darte el valor exacto de tus activos.
+              Cambiá toda la visualización de tu portafolio entre Pesos (ARS) y Dólares (USD) con un solo clic. Valuonic toma las cotizaciones de Dólar Cripto, MEP y Blue en tiempo real para darte el valor exacto de tus activos.
             </p>
             <div style={{ marginTop: '2rem', padding: '1.5rem', background: 'rgba(0,0,0,0.4)', borderRadius: '12px', display: 'flex', gap: '1rem', alignItems: 'center', border: '1px solid rgba(255,255,255,0.05)' }}>
               <div style={{ padding: '0.5rem 1rem', background: 'rgba(255,255,255,0.05)', borderRadius: '6px', fontWeight: 600, color: '#a1a1aa' }}>ARS $45.2M</div>
@@ -146,9 +146,9 @@ export default function LandingPage({ isAuthenticated, user, onLogout }) {
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem', color: '#fff' }}>
             <img src="/logo.png" alt="Logo" style={{ height: '20px' }} />
-            <span style={{ fontWeight: 600 }}>LedgerView</span>
+            <span style={{ fontWeight: 600 }}>Valuonic</span>
           </div>
-          <p>&copy; 2026 LedgerView. Todos los derechos reservados.</p>
+          <p>&copy; 2026 Valuonic. Todos los derechos reservados.</p>
         </div>
         <div style={{ display: 'flex', gap: '2rem' }}>
           <a href="#" style={{ color: '#71717a', textDecoration: 'none', transition: 'color 0.2s' }} onMouseOver={(e) => e.target.style.color='#fff'} onMouseOut={(e) => e.target.style.color='#71717a'}>Términos</a>

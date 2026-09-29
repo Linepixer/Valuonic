@@ -1,8 +1,8 @@
-# Contributing to LedgerView
+# Contributing to Valuonic
 
-Thank you for your interest in contributing to LedgerView!
+Thank you for your interest in contributing to Valuonic!
 
-LedgerView is an open-source portfolio tracker focused on supporting
+Valuonic is an open-source portfolio tracker focused on supporting
 investment tracking for users in markets like Argentina, where assets
 such as CEDEARs, cryptocurrencies, and local instruments coexist.
 
@@ -12,7 +12,7 @@ This document describes how to contribute to the project.
 
 ## Development Philosophy
 
-LedgerView aims to be:
+Valuonic aims to be:
 
 -   Simple
 -   Transparent
@@ -30,7 +30,7 @@ high code quality.
 2.  Clone your fork locally
 
 ``` bash
-git clone https://github.com/Linepixer/ledgerview.git
+git clone https://github.com/Linepixer/valuonic.git
 ```
 
 3.  Create a new branch for your change
@@ -105,8 +105,8 @@ If you find a bug or want to request a feature:
 Please be respectful and constructive when interacting with other
 contributors.
 
-We want LedgerView to be a welcoming open-source project.
+We want Valuonic to be a welcoming open-source project.
 
 ------------------------------------------------------------------------
 
-Thank you for helping improve LedgerView.
+Thank you for helping improve Valuonic.

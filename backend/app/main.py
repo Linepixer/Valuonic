@@ -14,7 +14,7 @@ async def lifespan(app: FastAPI):
 
 from app.core.rate_limit import limiter
 
-app = FastAPI(title="LedgerView API", lifespan=lifespan)
+app = FastAPI(title="Valuonic API", lifespan=lifespan)
 
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
@@ -40,4 +40,4 @@ app.include_router(admin.router)
 app.include_router(corporate_events.router)
 @app.get("/")
 def root():
-    return {"message": "LedgerView API running"}
+    return {"message": "Valuonic API running"}

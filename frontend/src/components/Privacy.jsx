@@ -3,14 +3,14 @@ import React from 'react';
 const Privacy = () => {
   return (
     <div style={{ padding: '2rem', maxWidth: '800px', margin: '0 auto', color: '#e0e3e7', lineHeight: '1.6', fontFamily: 'var(--font-sans)' }}>
-      <h1 style={{ color: '#fff', marginBottom: '1.5rem', fontSize: '2rem' }}>Política de Privacidad de LedgerView</h1>
+      <h1 style={{ color: '#fff', marginBottom: '1.5rem', fontSize: '2rem' }}>Política de Privacidad de Valuonic</h1>
       <p style={{ color: '#86948a', marginBottom: '2rem' }}>Última actualización: 27 de septiembre de 2026</p>
 
       <p style={{ marginBottom: '1rem' }}>
-        En LedgerView valoramos la transparencia. Al ser un proyecto personal y experimental desarrollado con fines de aprendizaje y demostración, queremos que entiendas exactamente cómo manejamos la información que decides cargar en nuestra plataforma.
+        En Valuonic valoramos la transparencia. Al ser un proyecto personal y experimental desarrollado con fines de aprendizaje y demostración, queremos que entiendas exactamente cómo manejamos la información que decides cargar en nuestra plataforma.
       </p>
       <p style={{ marginBottom: '2rem' }}>
-        Al utilizar LedgerView, aceptas las prácticas descritas en esta política. Si no te sientes cómodo con el nivel de privacidad y seguridad aquí descrito, te recomendamos no utilizar la aplicación.
+        Al utilizar Valuonic, aceptas las prácticas descritas en esta política. Si no te sientes cómodo con el nivel de privacidad y seguridad aquí descrito, te recomendamos no utilizar la aplicación.
       </p>
 
       <section style={{ marginBottom: '2rem' }}>
@@ -25,7 +25,7 @@ const Privacy = () => {
       <section style={{ marginBottom: '2rem' }}>
         <h2 style={{ color: '#fff', fontSize: '1.5rem', marginBottom: '1rem' }}>2. Visibilidad de los Datos y Falta de Cifrado (Importante)</h2>
         <p>
-          <strong style={{ color: '#fff' }}>LedgerView NO utiliza cifrado de extremo a extremo (End-to-End Encryption).</strong>
+          <strong style={{ color: '#fff' }}>Valuonic NO utiliza cifrado de extremo a extremo (End-to-End Encryption).</strong>
         </p>
         <ul style={{ listStyleType: 'disc', paddingLeft: '1.5rem', marginTop: '1rem' }}>
           <li style={{ marginBottom: '0.5rem' }}>Los datos de tus transacciones y portafolio se almacenan en texto plano o con formatos estándar en nuestra base de datos (PostgreSQL).</li>
@@ -51,10 +51,10 @@ const Privacy = () => {
           <li style={{ marginBottom: '0.5rem' }}>No estamos exentos de sufrir vulnerabilidades, ciberataques o brechas de seguridad.</li>
         </ul>
         <p style={{ marginTop: '1rem' }}>
-          Al ingresar tus datos en LedgerView, asumes plenamente el riesgo de que tu información pueda verse comprometida en caso de un incidente de seguridad.
+          Al ingresar tus datos en Valuonic, asumes plenamente el riesgo de que tu información pueda verse comprometida en caso de un incidente de seguridad.
         </p>
         <p style={{ marginTop: '1rem' }}>
-          <strong style={{ color: '#fff' }}>Recomendación:</strong> No utilices LedgerView si consideras que la divulgación accidental de tu portafolio de inversiones podría causarte un daño grave. Trata la información que cargas aquí con el mismo cuidado que tendrías en un foro público.
+          <strong style={{ color: '#fff' }}>Recomendación:</strong> No utilices Valuonic si consideras que la divulgación accidental de tu portafolio de inversiones podría causarte un daño grave. Trata la información que cargas aquí con el mismo cuidado que tendrías en un foro público.
         </p>
       </section>
 
@@ -77,7 +77,7 @@ const Privacy = () => {
       <section style={{ marginBottom: '2rem' }}>
         <h2 style={{ color: '#fff', fontSize: '1.5rem', marginBottom: '1rem' }}>7. Cambios en esta Política</h2>
         <p>
-          Podemos actualizar esta Política de Privacidad en cualquier momento. El uso continuo de LedgerView tras cualquier modificación implica tu aceptación de las nuevas condiciones.
+          Podemos actualizar esta Política de Privacidad en cualquier momento. El uso continuo de Valuonic tras cualquier modificación implica tu aceptación de las nuevas condiciones.
         </p>
       </section>
 
@@ -89,7 +89,7 @@ const Privacy = () => {
       </section>
 
       <p style={{ marginTop: '3rem', color: '#86948a', fontSize: '0.9rem', textAlign: 'center' }}>
-        &copy; 2026 LedgerView.
+        &copy; 2026 Valuonic.
       </p>
     </div>
   );
