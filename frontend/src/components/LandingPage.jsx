@@ -12,8 +12,7 @@ export default function LandingPage({ isAuthenticated, user, onLogout }) {
       {/* Navbar */}
       <nav className="landing-navbar">
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer' }} onClick={() => window.scrollTo(0, 0)}>
-          <img src="/logo.png" alt="Valuonic Logo" style={{ height: '32px' }} />
-          <span style={{ fontSize: '1.25rem', fontWeight: 700, letterSpacing: '-0.05em' }}>Valuonic</span>
+          <img src="/logo.svg?v=4" alt="Valuonic Logo" style={{ height: '45px' }} />
         </div>
         <div className="landing-nav-links">
           {isAuthenticated ? (
@@ -145,8 +144,7 @@ export default function LandingPage({ isAuthenticated, user, onLogout }) {
       <footer className="landing-footer">
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem', color: '#fff' }}>
-            <img src="/logo.png" alt="Logo" style={{ height: '20px' }} />
-            <span style={{ fontWeight: 600 }}>Valuonic</span>
+            <img src="/logo.svg?v=4" alt="Logo" style={{ height: '28px' }} />
           </div>
           <p>&copy; 2026 Valuonic. Todos los derechos reservados.</p>
         </div>

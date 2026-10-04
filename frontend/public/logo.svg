@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="115 45 630 145" width="630" height="145">
+  <defs>
+    <linearGradient id="neonPulse_clean_cap" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#10b981"/>
+      <stop offset="100%" stop-color="#6ee7b7"/>
+    </linearGradient>
+  </defs>
+  <!-- Composición Barras de Datos + Valuonic. con V mayúscula -->
+  <g transform="translate(95, 48)">
+    <g transform="translate(0, 0)">
+      <rect x="20" y="20" width="16" height="70" rx="8" fill="#e2e8f0"/>
+      <rect x="46" y="55" width="16" height="60" rx="8" fill="#94a3b8"/>
+      <rect x="72" y="90" width="16" height="50" rx="8" fill="#334155"/>
+      <rect x="98" y="50" width="16" height="75" rx="8" fill="#059669"/>
+      <rect x="124" y="10" width="16" height="100" rx="8" fill="url(#neonPulse_clean_cap)"/>
+      <circle cx="132" cy="10" r="5" fill="#ffffff"/>
+    </g>
+    <g transform="translate(185, 96)">
+      <text font-family="'Plus Jakarta Sans', system-ui, sans-serif" font-size="80" font-weight="800" fill="#ffffff" letter-spacing="-0.8">Valuonic<tspan fill="#10b981">.</tspan></text>
+    </g>
+  </g>
+</svg>

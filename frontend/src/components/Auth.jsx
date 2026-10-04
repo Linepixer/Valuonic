@@ -159,8 +159,7 @@ export default function Auth({ onLogin }) {
       {/* Top Header Grid Line */}
       <header className="auth-header">
         <div className="auth-logo" onClick={() => navigate('/')}>
-          <img src="/logo.png" alt="Valuonic Logo" style={{ height: '24px' }} />
-          <span style={{ fontSize: '1.25rem', fontWeight: 600, letterSpacing: '-0.02em', color: '#fff' }}>Valuonic</span>
+          <img src="/logo.svg?v=4" alt="Valuonic Logo" style={{ height: '32px' }} />
         </div>
       </header>
 

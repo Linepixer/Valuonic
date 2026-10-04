@@ -118,8 +118,7 @@ function App() {
             onClick={() => navigate('/')}
             style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer' }}
           >
-            <img src="/logo.png" alt="Valuonic Logo" style={{ height: '32px' }} />
-            <span className="hide-on-mobile">Valuonic</span>
+            <img src="/logo.svg?v=4" alt="Valuonic Logo" style={{ height: '45px' }} />
           </div>
           <div className="flex-row">
             {isAuthenticated && !currentPath.startsWith('/admin') && (

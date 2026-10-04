@@ -86,7 +86,7 @@ def send_verification_email(to_email: str, token: str) -> None:
     <body>
         <div class="container">
             <div class="logo">
-                <img src="https://valuonic.linepixer.com/logo.png" alt="LV" width="32" height="32" style="width: 32px; height: 32px; margin-right: 10px; display: inline-block; vertical-align: middle;">
+                <img src="https://valuonic.linepixer.com/favicon.svg" alt="LV" width="32" height="32" style="width: 32px; height: 32px; margin-right: 10px; display: inline-block; vertical-align: middle;">
                 <span style="vertical-align: middle;">Valuonic</span>
             </div>
             <h2>Confirma tu dirección de email</h2>
@@ -216,7 +216,7 @@ def send_password_reset_email(to_email: str, token: str) -> None:
     <body>
         <div class="container">
             <div class="logo">
-                <img src="https://valuonic.linepixer.com/logo.png" alt="LV" width="32" height="32" style="width: 32px; height: 32px; margin-right: 10px; display: inline-block; vertical-align: middle;">
+                <img src="https://valuonic.linepixer.com/favicon.svg" alt="LV" width="32" height="32" style="width: 32px; height: 32px; margin-right: 10px; display: inline-block; vertical-align: middle;">
                 <span style="vertical-align: middle;">Valuonic</span>
             </div>
             <h2>Restablece tu contraseña</h2>
@@ -348,7 +348,7 @@ def send_admin_account_deletion_email(admin_email: str, token: str, user_to_dele
     <body>
         <div class="container">
             <div class="logo">
-                <img src="https://valuonic.linepixer.com/logo.png" alt="LV" width="32" height="32" style="width: 32px; height: 32px; margin-right: 10px; display: inline-block; vertical-align: middle;">
+                <img src="https://valuonic.linepixer.com/favicon.svg" alt="LV" width="32" height="32" style="width: 32px; height: 32px; margin-right: 10px; display: inline-block; vertical-align: middle;">
                 <span style="vertical-align: middle;">Valuonic</span>
             </div>
             <h2>Confirmar eliminación de cuenta</h2>
@@ -478,7 +478,7 @@ def send_account_deletion_email(to_email: str, token: str) -> None:
     <body>
         <div class="container">
             <div class="logo">
-                <img src="https://valuonic.linepixer.com/logo.png" alt="LV" width="32" height="32" style="width: 32px; height: 32px; margin-right: 10px; display: inline-block; vertical-align: middle;">
+                <img src="https://valuonic.linepixer.com/favicon.svg" alt="LV" width="32" height="32" style="width: 32px; height: 32px; margin-right: 10px; display: inline-block; vertical-align: middle;">
                 <span style="vertical-align: middle;">Valuonic</span>
             </div>
             <h2>Solicitud de eliminación de cuenta</h2>
