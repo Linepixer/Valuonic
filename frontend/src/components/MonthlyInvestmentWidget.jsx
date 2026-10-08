@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { TrendingUp, Calendar, ArrowRight, HelpCircle } from 'lucide-react';
 import api from '../api';
 
@@ -157,7 +158,7 @@ export default function MonthlyInvestmentWidget({ currency }) {
         )}
       </div>
 
-      {isModalOpen && !isEmpty && (
+      {isModalOpen && !isEmpty && createPortal(
         <div className="modal-overlay" onClick={(e) => { if (e.target.className === 'modal-overlay') setIsModalOpen(false); }}>
           <div className="modal-content" style={{ maxWidth: '600px', padding: '1.5rem', borderRadius: '12px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
@@ -188,7 +189,8 @@ export default function MonthlyInvestmentWidget({ currency }) {
               ))}
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   );
