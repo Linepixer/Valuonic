@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
+import { useGoogleLogin } from '@react-oauth/google';
 import api from '../api';
 import es from '../locales/es.json';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
@@ -57,6 +58,28 @@ export default function Auth({ onLogin }) {
       navigate(newPath);
     }
   };
+
+  const googleLogin = useGoogleLogin({
+    onSuccess: async (tokenResponse) => {
+      setIsLoading(true);
+      
+      try {
+        const res = await api.post('/google', { token: tokenResponse.access_token });
+        localStorage.setItem('token', res.data.access_token);
+        api.defaults.headers.common['Authorization'] = `Bearer ${res.data.access_token}`;
+        showToast('¡Bienvenido a Valuonic!', 'success');
+        onLogin();
+        navigate('/');
+      } catch (err) {
+        showToast('Error al iniciar sesión con Google', 'error');
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    onError: () => {
+      showToast('Login con Google cancelado o fallido', 'error');
+    }
+  });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -213,7 +236,7 @@ export default function Auth({ onLogin }) {
             <h2 className="auth-title">{isLogin ? "Ingresá a tu cuenta" : "Creá tu cuenta"}</h2>
             <p className="auth-subtitle">{isLogin ? "Ingresá tus credenciales para continuar." : "Ingresá tus datos para registrarte."}</p>
 
-            <button className="btn-google" type="button" disabled>
+            <button className="btn-google" type="button" onClick={() => googleLogin()}>
               <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" />
               Continuar con Google
             </button>

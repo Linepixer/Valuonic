@@ -1,4 +1,4 @@
-/* Auth.css - Refined Grid Layout */
+﻿/* Auth.css - Refined Grid Layout */
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap');
 
 body:has(.auth-layout) {
@@ -192,7 +192,7 @@ h1, h2, h3, h4, h5, h6, .auth-visual-title, .auth-title {
   border-radius: 8px;
   font-size: 14px;
   font-weight: 500;
-  cursor: not-allowed;
+  cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -411,7 +411,7 @@ select.auth-input option {
 
 .btn-auth-submit:disabled {
   opacity: 0.7;
-  cursor: not-allowed;
+  cursor: pointer;
 }
 
 /* Switch Link */
@@ -531,7 +531,7 @@ select.auth-input option {
   }
 }
 
-/* Alturas pequeñas (Laptops de 1366x768, etc) para evitar cortes sin agregar scrollbar */
+/* Alturas pequeÃ±as (Laptops de 1366x768, etc) para evitar cortes sin agregar scrollbar */
 @media (max-height: 950px) {
   .auth-layout {
     zoom: 0.9;
@@ -557,7 +557,7 @@ select.auth-input option {
 }
 
 
-/* Escalamiento dinámico para pantallas grandes (1080p y 2K) */
+/* Escalamiento dinÃ¡mico para pantallas grandes (1080p y 2K) */
 @media (min-width: 1900px) {
   .auth-layout {
     zoom: 1.15;

@@ -27,3 +27,6 @@ typing_extensions==4.15.0
 uvicorn==0.46.0
 apscheduler==3.10.4
 slowapi==0.1.9
+google-auth==2.35.0
+requests==2.32.3
+

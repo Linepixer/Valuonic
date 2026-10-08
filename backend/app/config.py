@@ -16,6 +16,8 @@ class Settings:
     
     ENV: str = os.getenv("ENV", "development")
     
+    GOOGLE_CLIENT_ID: str = os.getenv("GOOGLE_CLIENT_ID", "")
+    
     @property
     def ADMIN_EMAILS(self) -> list[str]:
         emails = os.getenv("ADMIN_EMAILS", "")

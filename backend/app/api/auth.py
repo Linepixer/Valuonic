@@ -217,3 +217,71 @@ def reset_password(request: Request, body: ResetPasswordRequest, response: Respo
         raise HTTPException(status_code=400, detail="El link ha expirado")
     except jwt.PyJWTError:
         raise HTTPException(status_code=400, detail="Token inválido")
+
+from pydantic import BaseModel
+from google.oauth2 import id_token
+from google.auth.transport import requests as google_requests
+
+class GoogleToken(BaseModel):
+    token: str
+
+@router.post("/google")
+def google_auth(
+    token_data: GoogleToken,
+    response: Response,
+    db: Session = Depends(get_db)
+):
+    try:
+        import requests
+        # Get user info using access token
+        resp = requests.get(
+            "https://www.googleapis.com/oauth2/v3/userinfo",
+            headers={"Authorization": f"Bearer {token_data.token}"}
+        )
+        if resp.status_code != 200:
+            raise ValueError("Token de Google inválido")
+            
+        idinfo = resp.json()
+
+        email = idinfo.get("email")
+        if not email:
+            raise HTTPException(status_code=400, detail="El token no contiene un email.")
+            
+        user = db.query(User).filter(User.email == email).first()
+        
+        if user:
+            # User exists, optionally link google_id if not already linked
+            if not user.google_id:
+                user.google_id = idinfo.get("sub")
+                user.auth_provider = "google"
+                user.is_verified = True
+                if not user.picture and idinfo.get("picture"):
+                    user.picture = idinfo.get("picture")
+                db.commit()
+                db.refresh(user)
+        else:
+            # Create new user
+            user = User(
+                email=email,
+                name=idinfo.get("name"),
+                hashed_password=None,
+                is_verified=True,
+                auth_provider="google",
+                google_id=idinfo.get("sub"),
+                picture=idinfo.get("picture")
+            )
+            db.add(user)
+            db.commit()
+            db.refresh(user)
+
+        # Generate Valuonic JWT
+        access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+        access_token = security.create_access_token(
+            data={"sub": str(user.id)}, expires_delta=access_token_expires
+        )
+        set_auth_cookie(response, access_token)
+
+        return {"access_token": access_token, "token_type": "bearer", "user_id": str(user.id)}
+        
+    except ValueError:
+        raise HTTPException(status_code=401, detail="Token de Google inválido")
