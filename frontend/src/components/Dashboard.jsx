@@ -827,7 +827,7 @@ export default function Dashboard({ currency }) {
       )}
 
       {isModalOpen && (
-        <div className="modal-overlay" onClick={() => setIsModalOpen(false)}>
+        <div className="modal-overlay" onMouseDown={(e) => { if (e.target.className === 'modal-overlay') setIsModalOpen(false); }}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.5rem', borderBottom: '1px solid var(--border)' }}>
               <h2 style={{ margin: 0 }}>Nueva transacción</h2>

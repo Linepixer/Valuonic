@@ -159,7 +159,7 @@ export default function MonthlyInvestmentWidget({ currency }) {
       </div>
 
       {isModalOpen && !isEmpty && createPortal(
-        <div className="modal-overlay" onClick={(e) => { if (e.target.className === 'modal-overlay') setIsModalOpen(false); }}>
+        <div className="modal-overlay" onMouseDown={(e) => { if (e.target.className === 'modal-overlay') setIsModalOpen(false); }}>
           <div className="modal-content" style={{ maxWidth: '600px', padding: '1.5rem', borderRadius: '12px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
               <h2 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '1.4rem' }}>

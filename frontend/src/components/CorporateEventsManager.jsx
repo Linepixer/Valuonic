@@ -112,7 +112,7 @@ export default function CorporateEventsManager() {
         </div>
 
         {showForm && (
-          <div className="modal-overlay" onClick={() => !formSubmitting && closeForm()}>
+          <div className="modal-overlay" onMouseDown={(e) => { if (e.target.className === "modal-overlay") { (() => !formSubmitting && closeForm())(e); } }}>
             <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '600px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', padding: '1.5rem', borderBottom: '1px solid var(--border)' }}>
                 <h2 style={{ margin: 0, paddingRight: '1rem', lineHeight: '1.2' }}>Registrar cambio de ratio</h2>

@@ -559,7 +559,7 @@ export default function TransactionsList({ currency, onTransactionDeleted, refre
       </div>
 
       {deletingId && (
-        <div className="modal-overlay" onClick={() => setDeletingId(null)}>
+        <div className="modal-overlay" onMouseDown={(e) => { if (e.target.className === "modal-overlay") { (() => setDeletingId(null))(e); } }}>
           <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '400px' }}>
             <div style={{ padding: '1.5rem', textAlign: 'center' }}>
               <AlertTriangle size={48} color="var(--loss)" style={{ marginBottom: '1rem' }} />

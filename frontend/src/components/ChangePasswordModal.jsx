@@ -38,7 +38,7 @@ export default function ChangePasswordModal({ onClose, onSuccess }) {
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-overlay" onMouseDown={(e) => { if (e.target.className === "modal-overlay") { (onClose)(e); } }}>
       <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '400px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.5rem', borderBottom: '1px solid var(--border)' }}>
           <h2 style={{ margin: 0 }}>Cambiar contraseña</h2>

@@ -184,7 +184,7 @@ export default function AccountSettings({ user }) {
 
       {/* Modal Confirmación Borrar Transacciones */}
       {showDeleteTransactionsModal && (
-        <div className="modal-overlay" onClick={() => !loadingTransactions && setShowDeleteTransactionsModal(false)}>
+        <div className="modal-overlay" onMouseDown={(e) => { if (e.target.className === "modal-overlay") { (() => !loadingTransactions && setShowDeleteTransactionsModal(false))(e); } }}>
           <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '420px' }}>
             <div style={{ padding: '1.75rem', textAlign: 'center' }}>
               <AlertTriangle size={44} color="var(--loss)" style={{ marginBottom: '1rem' }} />
@@ -238,7 +238,7 @@ export default function AccountSettings({ user }) {
 
       {/* Modal Confirmación Eliminar Cuenta */}
       {showDeleteAccountModal && (
-        <div className="modal-overlay" onClick={() => !loadingAccount && setShowDeleteAccountModal(false)}>
+        <div className="modal-overlay" onMouseDown={(e) => { if (e.target.className === "modal-overlay") { (() => !loadingAccount && setShowDeleteAccountModal(false))(e); } }}>
           <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '420px' }}>
             <div style={{ padding: '1.75rem', textAlign: 'center' }}>
               <AlertTriangle size={44} color="var(--loss)" style={{ marginBottom: '1rem' }} />
