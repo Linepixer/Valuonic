@@ -8,15 +8,21 @@ export default function XirrCard({ portfolio, isArs }) {
     const timer = setTimeout(() => setMounted(true), 150);
     return () => clearTimeout(timer);
   }, []);
-  const globalXirr = isArs ? (portfolio.xirr_ars || 0) : (portfolio.xirr_usd || 0);
+  let globalXirr = isArs ? (portfolio.xirr_ars || 0) : (portfolio.xirr_usd || 0);
+  if (Math.abs(globalXirr) < 0.005) globalXirr = 0;
 
   // Filter assets that the user currently holds (total_value > 0)
-  const assetXirrData = portfolio.assets.map(asset => ({
-    ticker: asset.ticker,
-    name: asset.name,
-    xirr: isArs ? (asset.xirr_ars || 0) : (asset.xirr_usd || 0),
-    total_value: isArs ? asset.total_value_ars : asset.total_value_usd
-  })).filter(a => a.total_value > 0)
+  const assetXirrData = portfolio.assets.map(asset => {
+    let xirrVal = isArs ? (asset.xirr_ars || 0) : (asset.xirr_usd || 0);
+    if (Math.abs(xirrVal) < 0.005) xirrVal = 0;
+    
+    return {
+      ticker: asset.ticker,
+      name: asset.name,
+      xirr: xirrVal,
+      total_value: isArs ? asset.total_value_ars : asset.total_value_usd
+    };
+  }).filter(a => a.total_value > 0)
     .sort((a, b) => b.xirr - a.xirr); // Sort highest to lowest
 
   const maxXirr = Math.max(...assetXirrData.map(a => Math.abs(a.xirr)), 1); // Avoid div by 0
