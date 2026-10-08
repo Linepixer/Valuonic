@@ -1,4 +1,4 @@
-name: Build and Push Docker Images
+﻿name: Build and Push Docker Images
 
 on:
   push:
@@ -62,3 +62,4 @@ jobs:
           labels: ${{ steps.meta-web.outputs.labels }}
           build-args: |
             VITE_API_URL=https://valuonic.linepixer.com/api
+            VITE_GOOGLE_CLIENT_ID=${{ secrets.VITE_GOOGLE_CLIENT_ID }}
