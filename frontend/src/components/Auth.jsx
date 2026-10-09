@@ -40,6 +40,7 @@ export default function Auth({ onLogin }) {
   const days = Array.from({ length: 31 }, (_, i) => i + 1);
 
   useEffect(() => {
+    document.title = isLogin ? 'Iniciar sesión | Valuonic' : 'Registrarse | Valuonic';
     if (location.pathname !== '/login' && location.pathname !== '/signup') {
       const search = location.search;
       navigate('/login' + search, { replace: true });

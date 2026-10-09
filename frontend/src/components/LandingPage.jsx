@@ -1,5 +1,5 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
+﻿import React from 'react';
+import { useNavigate, Link } from 'react-router-dom';
 import { ArrowRight, BarChart2, TrendingUp, PieChart, Lock, DollarSign, Activity, ChevronRight } from 'lucide-react';
 import AccountMenu from './AccountMenu';
 import './LandingPage.css';
@@ -22,8 +22,8 @@ export default function LandingPage({ isAuthenticated, user, onLogout }) {
             </>
           ) : (
             <>
-              <button className="btn-landing-ghost" onClick={() => navigate('/login')}>Iniciar sesión</button>
-              <button className="btn-landing-primary" onClick={() => navigate('/signup')}>
+              <Link to="/login" className="btn-landing-ghost">Iniciar sesión</Link>
+              <Link to="/signup" className="btn-landing-primary">
                 Crear cuenta
               </button>
             </>
