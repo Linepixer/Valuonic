@@ -25,7 +25,7 @@ export default function LandingPage({ isAuthenticated, user, onLogout }) {
               <Link to="/login" className="btn-landing-ghost">Iniciar sesión</Link>
               <Link to="/signup" className="btn-landing-primary">
                 Crear cuenta
-              </button>
+              </Link>
             </>
           )}
         </div>
@@ -157,3 +157,4 @@ export default function LandingPage({ isAuthenticated, user, onLogout }) {
     </div>
   );
 }
+
