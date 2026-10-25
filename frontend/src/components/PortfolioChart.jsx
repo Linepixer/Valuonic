@@ -18,13 +18,14 @@ export default function PortfolioChart({ data, isArs }) {
   const filteredData = useMemo(() => {
     if (timeRange === 'MAX') return chartData;
     
-    const now = new Date();
-    let targetDate = new Date();
-    if (timeRange === '1S') targetDate.setDate(now.getDate() - 7);
-    if (timeRange === '1M') targetDate.setMonth(now.getMonth() - 1);
-    if (timeRange === '3M') targetDate.setMonth(now.getMonth() - 3);
-    if (timeRange === '6M') targetDate.setMonth(now.getMonth() - 6);
-    if (timeRange === '1A') targetDate.setFullYear(now.getFullYear() - 1);
+    const lastItem = chartData[chartData.length - 1];
+    const baseDate = lastItem?.date ? new Date(lastItem.date + 'T12:00:00') : new Date();
+    let targetDate = new Date(baseDate);
+    if (timeRange === '1S') targetDate.setDate(baseDate.getDate() - 7);
+    if (timeRange === '1M') targetDate.setMonth(baseDate.getMonth() - 1);
+    if (timeRange === '3M') targetDate.setMonth(baseDate.getMonth() - 3);
+    if (timeRange === '6M') targetDate.setMonth(baseDate.getMonth() - 6);
+    if (timeRange === '1A') targetDate.setFullYear(baseDate.getFullYear() - 1);
     
     const targetString = targetDate.toISOString().split('T')[0];
     const filtered = chartData.filter(d => d.date >= targetString);
@@ -34,11 +35,51 @@ export default function PortfolioChart({ data, isArs }) {
 
   const dataKey = isArs ? 'total_value_ars' : 'total_value_usd';
   
-  // Determine color based on whether the portfolio went up or down in the filtered period
-  const firstValue = filteredData[0][dataKey];
-  const lastValue = filteredData[filteredData.length - 1][dataKey];
+  const firstValue = filteredData[0]?.[dataKey] ?? 0;
+  const lastValue = filteredData[filteredData.length - 1]?.[dataKey] ?? 0;
   const isProfit = lastValue >= firstValue;
   const color = isEmpty ? 'var(--profit)' : (isProfit ? 'var(--profit)' : 'var(--loss)');
+
+  const { yDomain, span } = useMemo(() => {
+    if (isEmpty || !filteredData || filteredData.length === 0) {
+      return { yDomain: [0, 'auto'], span: 0 };
+    }
+    const values = filteredData
+      .map(d => Number(d[dataKey]))
+      .filter(v => typeof v === 'number' && !isNaN(v));
+
+    if (values.length === 0) return { yDomain: [0, 'auto'], span: 0 };
+
+    const min = Math.min(...values);
+    const max = Math.max(...values);
+    const range = max - min;
+
+    if (range === 0) {
+      if (min === 0) return { yDomain: [0, 10], span: 10 };
+      const pad = min * 0.05;
+      const lower = Math.max(0, min - pad);
+      const upper = max + pad;
+      return { yDomain: [lower, upper], span: upper - lower };
+    }
+
+    const pad = range * 0.08;
+    const lower = Math.max(0, min - pad);
+    const upper = max + pad;
+    return { yDomain: [lower, upper], span: upper - lower };
+  }, [filteredData, dataKey, isEmpty]);
+
+  const formatYTick = (value) => {
+    if (value >= 1000000 && span >= 100000) {
+      return `$${(value / 1000000).toLocaleString('es-AR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}M`;
+    }
+    if (value >= 1000 && span >= 2000) {
+      return `$${(value / 1000).toLocaleString('es-AR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}k`;
+    }
+    if (span < 2) {
+      return `$${value.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    }
+    return `$${Math.round(value).toLocaleString('es-AR')}`;
+  };
 
   return (
     <div style={{ width: '100%', height: 330, marginTop: '1rem' }}>
@@ -64,7 +105,7 @@ export default function PortfolioChart({ data, isArs }) {
         ))}
       </div>
       <ResponsiveContainer width="100%" height={300}>
-        <AreaChart data={filteredData} margin={{ top: 20, right: 0, left: 10, bottom: 0 }}>
+        <AreaChart key={`${timeRange}-${isArs}`} data={filteredData} margin={{ top: 20, right: 0, left: 10, bottom: 0 }}>
           <defs>
             <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
               <stop offset="5%" stopColor={color} stopOpacity={0.3}/>
@@ -84,11 +125,8 @@ export default function PortfolioChart({ data, isArs }) {
             axisLine={false} 
             tickLine={false} 
             tick={{ fill: 'var(--text-muted)', fontSize: 11, dx: 10, dy: -10, textAnchor: 'start' }}
-            tickFormatter={(value) => {
-              if (value >= 1000000) return `$${(value / 1000000).toLocaleString('es-AR', {minimumFractionDigits: 1, maximumFractionDigits: 1})}M`;
-              if (value >= 1000) return `$${(value / 1000).toLocaleString('es-AR', {minimumFractionDigits: 1, maximumFractionDigits: 1})}k`;
-              return `$${value.toLocaleString('es-AR')}`;
-            }}
+            domain={yDomain}
+            tickFormatter={formatYTick}
             width={1}
             mirror={false}
           />
@@ -121,8 +159,8 @@ export default function PortfolioChart({ data, isArs }) {
             fillOpacity={1} 
             fill="url(#colorValue)" 
             strokeWidth={3}
-            animationBegin={200}
-            animationDuration={1500}
+            animationBegin={0}
+            animationDuration={600}
             activeDot={{ r: 6, fill: color, stroke: 'var(--bg-main)', strokeWidth: 2 }}
           />
         </AreaChart>
