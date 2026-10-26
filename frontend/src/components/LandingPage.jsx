@@ -48,6 +48,16 @@ export default function LandingPage() {
             >
               Arquitectura
             </a>
+            <a
+              href="/about"
+              className="landing-nav-link landing-nav-link-visible"
+              onClick={(e) => {
+                e.preventDefault();
+                navigate('/about');
+              }}
+            >
+              Acerca de
+            </a>
             <div className="landing-nav-divider" />
             <button
               className="btn-landing-primary"

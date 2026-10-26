@@ -1215,4 +1215,353 @@
     align-items: flex-start;
     gap: 1.5rem;
   }
+  .landing-nav-link.landing-nav-link-visible {
+    display: inline-flex;
+    font-size: 0.85rem;
+  }
+  .landing-nav-right {
+    gap: 0.85rem;
+  }
+}
+
+/* ==========================================================================
+   7. PÁGINA ACERCA DE (/about)
+   ========================================================================== */
+
+.about-page {
+  width: 100%;
+  max-width: 1540px;
+  margin: 0 auto;
+  padding: 3.5rem 2rem 5rem 2rem;
+  position: relative;
+  z-index: 2;
+  box-sizing: border-box;
+}
+
+.about-container {
+  display: flex;
+  flex-direction: column;
+}
+
+.about-intro {
+  padding-bottom: 3rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.about-heading {
+  font-size: clamp(2.15rem, 2.8vw, 3rem);
+  font-weight: 800;
+  line-height: 1.15;
+  color: #FFFFFF;
+  letter-spacing: -0.03em;
+  margin: 0 0 0.85rem 0;
+}
+
+.about-subtitle {
+  font-size: 1.1rem;
+  color: #94A3B8;
+  line-height: 1.6;
+  margin: 0;
+  max-width: 720px;
+}
+
+/* Filas editoriales de dos columnas que aprovechan el ancho de pantalla */
+.about-row {
+  display: grid;
+  grid-template-columns: 360px 1fr;
+  gap: 4rem;
+  padding: 3rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  align-items: start;
+}
+
+.about-row-label h2 {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #FFFFFF;
+  line-height: 1.35;
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+
+.about-row-body {
+  display: flex;
+  flex-direction: column;
+  gap: 1.15rem;
+  max-width: 880px;
+  min-width: 0;
+  width: 100%;
+}
+
+.about-row-body p {
+  color: #CBD5E1;
+  font-size: 1.02rem;
+  line-height: 1.75;
+  margin: 0;
+}
+
+.about-row-body strong {
+  color: #FFFFFF;
+  font-weight: 600;
+}
+
+.about-row-body em {
+  color: #E2E8F0;
+  font-style: italic;
+}
+
+/* Tres bloques simples para "Cómo funciona" */
+.about-steps-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.25rem;
+  margin-top: 0.5rem;
+}
+
+.about-step-block {
+  background: #111318;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 1.35rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.about-step-block h3 {
+  font-size: 0.98rem;
+  font-weight: 700;
+  color: #FFFFFF;
+  margin: 0;
+}
+
+.about-step-block p {
+  color: #94A3B8;
+  font-size: 0.92rem;
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* Terminal neofetch del Homelab */
+.about-neofetch-terminal {
+  margin-top: 0.75rem;
+  background: #0B0D13;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  overflow: hidden;
+  font-family: 'JetBrains Mono', 'Fira Code', Consolas, monospace;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.about-terminal-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.55rem 0.9rem;
+  background: #111318;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.about-terminal-title {
+  font-size: 0.75rem;
+  color: #94A3B8;
+}
+
+.about-terminal-body {
+  padding: 1.25rem 1.5rem;
+  overflow-x: auto;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: #E2E8F0;
+}
+
+.about-terminal-cmd {
+  margin-bottom: 0.85rem;
+}
+
+.nf-prompt-user {
+  color: #10B981;
+  font-weight: 600;
+}
+
+.nf-prompt-sep {
+  color: #E2E8F0;
+}
+
+.nf-prompt-path {
+  color: #3B82F6;
+  font-weight: 600;
+}
+
+.nf-cmd-text {
+  color: #FFFFFF;
+}
+
+.about-neofetch-grid {
+  display: flex;
+  align-items: flex-start;
+  gap: 2.25rem;
+}
+
+.about-neofetch-ascii {
+  margin: 0;
+  color: #F8FAFC;
+  font-family: inherit;
+  font-size: 0.78rem;
+  line-height: 1.25;
+  user-select: none;
+  flex-shrink: 0;
+}
+
+.about-neofetch-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  white-space: nowrap;
+}
+
+.nf-key {
+  color: #EF4444;
+  font-weight: 600;
+}
+
+.nf-divider {
+  color: #64748B;
+  margin-bottom: 0.15rem;
+}
+
+.nf-palette {
+  margin-top: 0.65rem;
+}
+
+.nf-palette-row {
+  display: flex;
+}
+
+.nf-palette-row span {
+  display: inline-block;
+  width: 22px;
+  height: 14px;
+}
+
+.about-lsblk-output {
+  margin: 0;
+  color: #CBD5E1;
+  font-family: inherit;
+  font-size: 0.78rem;
+  line-height: 1.4;
+}
+
+.about-row-body code {
+  background: rgba(255, 255, 255, 0.06);
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
+  font-family: 'JetBrains Mono', 'Fira Code', Consolas, monospace;
+  font-size: 0.88em;
+  color: #E2E8F0;
+}
+
+.about-author-links {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  flex-wrap: wrap;
+  margin-top: 0.25rem;
+}
+
+.about-profile-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.45rem 0.9rem;
+  background: #111318;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  color: #CBD5E1;
+  font-size: 0.88rem;
+  font-weight: 500;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.about-profile-link:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(16, 185, 129, 0.4);
+  color: #FFFFFF;
+}
+
+/* Barra de acciones final */
+.about-footer-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding-top: 3rem;
+}
+
+@media (max-width: 1080px) {
+  .about-row {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1.25rem;
+    padding: 2.25rem 0;
+  }
+  .about-row-body {
+    max-width: 100%;
+    min-width: 0;
+  }
+  .about-steps-grid {
+    grid-template-columns: 1fr;
+  }
+  .about-tech-bar {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 680px) {
+  .about-terminal-body {
+    padding: 1rem;
+    font-size: 0.74rem;
+  }
+  .about-neofetch-grid {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  .about-neofetch-ascii {
+    font-size: 0.66rem;
+    line-height: 1.2;
+  }
+  .about-neofetch-info {
+    white-space: normal;
+    word-break: break-word;
+    width: 100%;
+    min-width: 0;
+    line-height: 1.5;
+  }
+  .nf-palette-row span {
+    width: 18px;
+    height: 12px;
+  }
+}
+
+@media (max-width: 600px) {
+  .about-page {
+    padding: 2rem 1.25rem 3.5rem 1.25rem;
+  }
+  .about-intro {
+    padding-bottom: 2rem;
+  }
+  .about-tech-bar {
+    grid-template-columns: 1fr;
+  }
+  .about-footer-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .about-footer-actions .btn-hero-primary,
+  .about-footer-actions .btn-hero-github {
+    width: 100%;
+    justify-content: center;
+  }
 }

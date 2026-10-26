@@ -11,6 +11,7 @@ import DeleteAccountConfirm from './components/DeleteAccountConfirm'
 import AccountSettings from './components/AccountSettings'
 import UserDeleteAccountConfirm from './components/UserDeleteAccountConfirm'
 import LandingPage from './components/LandingPage'
+import About from './components/About'
 import Terms from './components/Terms'
 import Privacy from './components/Privacy'
 import api from './api'
@@ -97,7 +98,7 @@ function App() {
     checkSession()
   }
 
-  const isLandingPage = currentPath === '/'
+  const isLandingPage = currentPath === '/' || currentPath === '/about'
   const isAuthPage = currentPath === '/login' || currentPath === '/signup'
   const isFullscreenPage = isLandingPage || isAuthPage
 
@@ -144,6 +145,7 @@ function App() {
         )}
         
         <Routes>
+          <Route path="/about" element={<About />} />
           <Route path="/terms" element={<Terms />} />
           <Route path="/privacy" element={<Privacy />} />
           <Route path="/reset-password" element={<ResetPassword onLogin={onLoginSuccess} />} />
