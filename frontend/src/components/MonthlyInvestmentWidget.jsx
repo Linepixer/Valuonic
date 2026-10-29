@@ -19,12 +19,13 @@ export default function MonthlyInvestmentWidget({ currency }) {
       const res = await api.get('/transactions/');
       const transactions = res.data;
 
-      // Agrupar por mes (YYYY-MM)
+      // Agrupar por mes (YYYY-MM) calculando el flujo neto: Compras (+) menos Ventas (-)
       const monthlyData = {};
 
       transactions.forEach(tx => {
-        // Ignoramos operaciones que no sean "Compra" (Solo capital inyectado)
-        if (tx.type !== 'Compra') return;
+        const type = (tx.type || '').trim().toLowerCase();
+        // Solo computamos compras (inyección de capital) y ventas (desinversión/rescates)
+        if (type !== 'compra' && type !== 'venta') return;
 
         const date = new Date(tx.timestamp);
         const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
@@ -39,20 +40,24 @@ export default function MonthlyInvestmentWidget({ currency }) {
           amountInBaseCurrency = (Number(tx.total_value) || 0) * (Number(tx.exchange_rate) || 1);
         }
 
+        const netChange = type === 'compra' ? amountInBaseCurrency : -amountInBaseCurrency;
+
         if (!monthlyData[monthKey]) {
           monthlyData[monthKey] = { key: monthKey, label: monthLabel, amount: 0 };
         }
-        monthlyData[monthKey].amount += amountInBaseCurrency;
+        monthlyData[monthKey].amount += netChange;
       });
 
       // Convertir a array y ordenar cronológicamente
       const sortedData = Object.values(monthlyData).sort((a, b) => a.key.localeCompare(b.key));
       setData(sortedData);
 
-      // Calcular promedio
-      if (sortedData.length > 0) {
-        const total = sortedData.reduce((acc, curr) => acc + curr.amount, 0);
-        setAverage(total / sortedData.length);
+      // Calcular promedio mensual sobre meses con aporte neto positivo
+      const positiveMonths = sortedData.filter(d => d.amount > 0);
+      const totalNet = sortedData.reduce((acc, curr) => acc + curr.amount, 0);
+
+      if (positiveMonths.length > 0) {
+        setAverage(Math.max(0, totalNet) / positiveMonths.length);
       } else {
         setAverage(0);
       }
@@ -87,9 +92,12 @@ export default function MonthlyInvestmentWidget({ currency }) {
   const isEmpty = data.length === 0;
 
   // Stats para el modal
-  const totalAmount = data.reduce((acc, curr) => acc + curr.amount, 0);
-  const maxAmount = Math.max(...data.map(d => d.amount), 1);
-  const bestMonth = data.reduce((max, curr) => curr.amount > max.amount ? curr : max, data[0]);
+  const totalAmount = Math.max(0, data.reduce((acc, curr) => acc + curr.amount, 0));
+  const maxAmount = Math.max(...data.map(d => Math.max(0, d.amount)), 1);
+  const positiveMonths = data.filter(d => d.amount > 0);
+  const bestMonth = positiveMonths.length > 0
+    ? positiveMonths.reduce((max, curr) => curr.amount > max.amount ? curr : max, positiveMonths[0])
+    : { label: '-', amount: 0 };
 
   return (
     <>
@@ -182,7 +190,7 @@ export default function MonthlyInvestmentWidget({ currency }) {
             <div style={{ maxHeight: '55vh', overflowY: 'auto', paddingRight: '0.5rem', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
               {[...data].reverse().map(item => (
                 <div key={item.key} style={{ position: 'relative', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem 1rem', borderRadius: '6px', background: 'var(--bg-hover)' }}>
-                  <div style={{ position: 'absolute', top: 0, bottom: 0, left: 0, width: `${(item.amount / maxAmount) * 100}%`, background: 'var(--accent)', opacity: 0.1, borderRadius: '6px', zIndex: 0 }}></div>
+                  <div style={{ position: 'absolute', top: 0, bottom: 0, left: 0, width: `${Math.max(0, (item.amount / maxAmount) * 100)}%`, background: 'var(--accent)', opacity: 0.1, borderRadius: '6px', zIndex: 0 }}></div>
                   <span style={{ fontSize: '0.95rem', textTransform: 'capitalize', zIndex: 1 }}>{item.label}</span>
                   <span className="font-semibold" style={{ fontSize: '1.05rem', zIndex: 1 }}>{formatCurrency(item.amount)}</span>
                 </div>

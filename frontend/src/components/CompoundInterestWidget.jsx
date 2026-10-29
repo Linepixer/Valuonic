@@ -16,10 +16,13 @@ export default function CompoundInterestWidget({ portfolio, currency }) {
       const res = await api.get('/transactions/');
       const transactions = res.data;
 
+      // Agrupar por mes calculando el flujo neto (Compras - Ventas)
       const monthlyData = {};
 
       transactions.forEach(tx => {
-        if (tx.type !== 'Compra') return;
+        const type = (tx.type || '').trim().toLowerCase();
+        if (type !== 'compra' && type !== 'venta') return;
+
         const date = new Date(tx.timestamp);
         const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
         
@@ -30,17 +33,21 @@ export default function CompoundInterestWidget({ portfolio, currency }) {
           amountInBaseCurrency = (Number(tx.total_value) || 0) * (Number(tx.exchange_rate) || 1);
         }
 
+        const netChange = type === 'compra' ? amountInBaseCurrency : -amountInBaseCurrency;
+
         if (!monthlyData[monthKey]) {
           monthlyData[monthKey] = 0;
         }
-        monthlyData[monthKey] += amountInBaseCurrency;
+        monthlyData[monthKey] += netChange;
       });
 
-      const months = Object.keys(monthlyData);
+      const values = Object.values(monthlyData);
+      const positiveMonths = values.filter(v => v > 0);
+      const totalNet = values.reduce((sum, val) => sum + val, 0);
+
       let avg = 0;
-      if (months.length > 0) {
-        const total = Object.values(monthlyData).reduce((sum, val) => sum + val, 0);
-        avg = total / months.length;
+      if (positiveMonths.length > 0) {
+        avg = Math.max(0, totalNet) / positiveMonths.length;
       }
       setAverageInvestment(avg);
     } catch (err) {
