@@ -120,7 +120,7 @@ export default function ImportTransactions({ onImportSuccess, onCancel, onDataCh
           return;
         }
 
-        const typeNormalized = tipoRaw.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        const typeNormalized = tipoRaw.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, " ");
         let finalType = "";
         if (typeNormalized === "compra") {
           finalType = "Compra";
@@ -128,10 +128,10 @@ export default function ImportTransactions({ onImportSuccess, onCancel, onDataCh
           finalType = "Venta";
         } else if (typeNormalized === "intereses" || typeNormalized === "interes") {
           finalType = "Intereses";
-        } else if (typeNormalized === "comision") {
-          finalType = "Comisión";
+        } else if (typeNormalized === "fee de red") {
+          finalType = "Fee de Red";
         } else {
-          setError(`Tipo de operación inválido en la fila ${i + 1} ("${getValue("Tipo")}"). Debe ser Compra, Venta, Intereses o Comisión.`);
+          setError(`Tipo de operación inválido en la fila ${i + 1} ("${getValue("Tipo")}"). Debe ser Compra, Venta, Intereses o Fee de Red.`);
           return;
         }
 
@@ -163,13 +163,15 @@ export default function ImportTransactions({ onImportSuccess, onCancel, onDataCh
 
         timestamp = dateObj.toISOString();
 
+        const isCashInterest = finalType === "Intereses" && qtyRaw === 0;
+
         parsedData.push({
           timestamp: timestamp,
           ticker: tickerRaw,
           type: finalType,
           quantity: qtyRaw,
-          price_per_unit: priceRaw,
-          total_value: qtyRaw * priceRaw,
+          price_per_unit: isCashInterest ? 0 : priceRaw,
+          total_value: isCashInterest ? priceRaw : qtyRaw * priceRaw,
           operated_currency: getValue("Divisa operada"),
           exchange_rate: null, // Will be resolved by the backend
           platform: getValue("Plataforma") || null,
@@ -291,7 +293,7 @@ export default function ImportTransactions({ onImportSuccess, onCancel, onDataCh
                     name: "Tipo",
                     desc: "Tipo de operación realizada.",
                     format: "Tipos de operación aceptados:",
-                    badges: ["Compra", "Venta", "Intereses", "Comisión"]
+                    badges: ["Compra", "Venta", "Intereses", "Fee de Red"]
                   },
                   {
                     name: "Cantidad",
@@ -423,9 +425,13 @@ export default function ImportTransactions({ onImportSuccess, onCancel, onDataCh
                       <tr key={idx}>
                         <td data-label="Fecha y hora" className="text-muted">{formatDate(row.timestamp)}</td>
                         <td data-label="Activo" className="font-semibold">{row.ticker}</td>
-                        <td data-label="Tipo">{row.type}</td>
-                        <td data-label="Cantidad" className="text-right">{row.quantity}</td>
-                        <td data-label="Precio Un." className="text-right">{row.price_per_unit}</td>
+                        <td data-label="Tipo" style={{ whiteSpace: 'nowrap' }}>{row.type}</td>
+                        <td data-label="Cantidad" className="text-right">
+                          {row.type === 'Intereses' && row.quantity === 0 ? '-' : row.quantity}
+                        </td>
+                        <td data-label="Precio Un." className="text-right">
+                          {row.type === 'Intereses' && row.quantity === 0 ? row.total_value : row.price_per_unit}
+                        </td>
                         <td data-label="Moneda">{row.operated_currency}</td>
                         <td data-label="Plataforma" className="text-muted">{row.platform || '-'}</td>
                       </tr>

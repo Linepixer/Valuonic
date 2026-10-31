@@ -428,8 +428,12 @@ export default function TransactionsList({ currency, onTransactionDeleted, refre
             ) : (
               filteredTransactions.map(tx => {
                 const isCrypto = ['Crypto', 'Criptomoneda'].includes(tx.asset_type) || ['BTC', 'XRP', 'USDT'].includes(tx.ticker);
-                let total = tx.total_value;
-                let price = tx.price_per_unit;
+                const isCashInterest = tx.type.toLowerCase() === 'intereses' && Number(tx.quantity) === 0;
+                let total = Number(tx.total_value) || 0;
+                if (isCashInterest && total === 0 && Number(tx.price_per_unit) > 0) {
+                  total = Number(tx.price_per_unit);
+                }
+                let price = Number(tx.price_per_unit) || 0;
                 const opCurrency = tx.operated_currency || 'USD';
 
                 // Convert transaction values to match selected global currency
@@ -454,14 +458,16 @@ export default function TransactionsList({ currency, onTransactionDeleted, refre
                       <div className="font-semibold">{tx.ticker}</div>
                     </td>
                     <td>
-                      <span className={`badge ${isProfit ? 'badge-profit' : 'badge-loss'}`} style={{ background: 'transparent', padding: 0 }}>
+                      <span className={`badge ${isProfit ? 'badge-profit' : 'badge-loss'}`} style={{ background: 'transparent', padding: 0, whiteSpace: 'nowrap' }}>
                         {tx.type}
                       </span>
                     </td>
                     <td className="text-right font-semibold">
-                      {formatQuantity(tx.quantity, tx.ticker)}
+                      {isCashInterest ? '-' : formatQuantity(tx.quantity, tx.ticker)}
                     </td>
-                    <td className="text-right text-muted">{formatCurrency(price, displayCurrency)}</td>
+                    <td className="text-right text-muted">
+                      {isCashInterest ? '-' : formatCurrency(price, displayCurrency)}
+                    </td>
                     <td className="text-right">{formatCurrency(total, displayCurrency)}</td>
                     <td className="text-muted" style={{ fontSize: '0.85rem' }}>{tx.platform || '-'}</td>
                     <td>
@@ -490,8 +496,12 @@ export default function TransactionsList({ currency, onTransactionDeleted, refre
         ) : (
           filteredTransactions.map(tx => {
             const isCrypto = ['Crypto', 'Criptomoneda'].includes(tx.asset_type) || ['BTC', 'XRP', 'USDT'].includes(tx.ticker);
-            let total = tx.total_value;
-            let price = tx.price_per_unit;
+            const isCashInterest = tx.type.toLowerCase() === 'intereses' && Number(tx.quantity) === 0;
+            let total = Number(tx.total_value) || 0;
+            if (isCashInterest && total === 0 && Number(tx.price_per_unit) > 0) {
+              total = Number(tx.price_per_unit);
+            }
+            let price = Number(tx.price_per_unit) || 0;
             const opCurrency = tx.operated_currency || 'USD';
 
             // Convert transaction values to match selected global currency
@@ -524,7 +534,7 @@ export default function TransactionsList({ currency, onTransactionDeleted, refre
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                     <span className="font-semibold" style={{ fontSize: '1.2rem', color: 'var(--text-main)' }}>{tx.ticker}</span>
-                    <span className={`badge ${isProfit ? 'badge-profit' : 'badge-loss'}`} style={{ background: 'transparent', padding: 0 }}>
+                    <span className={`badge ${isProfit ? 'badge-profit' : 'badge-loss'}`} style={{ background: 'transparent', padding: 0, whiteSpace: 'nowrap' }}>
                       {tx.type}
                     </span>
                   </div>
@@ -536,16 +546,20 @@ export default function TransactionsList({ currency, onTransactionDeleted, refre
                     <Trash2 size={16} />
                   </button>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                  <span className="text-muted" style={{ fontSize: '0.85rem' }}>Cantidad</span>
-                  <span className="font-semibold">{formatQuantity(tx.quantity, tx.ticker)}</span>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                  <span className="text-muted" style={{ fontSize: '0.85rem' }}>Precio unitario</span>
-                  <span className="text-muted">{formatCurrency(price, displayCurrency)}</span>
-                </div>
+                {!isCashInterest && (
+                  <>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                      <span className="text-muted" style={{ fontSize: '0.85rem' }}>Cantidad</span>
+                      <span className="font-semibold">{formatQuantity(tx.quantity, tx.ticker)}</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                      <span className="text-muted" style={{ fontSize: '0.85rem' }}>Precio unitario</span>
+                      <span className="text-muted">{formatCurrency(price, displayCurrency)}</span>
+                    </div>
+                  </>
+                )}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-                  <span className="text-muted" style={{ fontSize: '0.85rem' }}>Total de la operación</span>
+                  <span className="text-muted" style={{ fontSize: '0.85rem' }}>{isCashInterest ? 'Monto recibido' : 'Total de la operación'}</span>
                   <span className="font-semibold">{formatCurrency(total, displayCurrency)}</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--border)', paddingTop: '0.75rem' }}>

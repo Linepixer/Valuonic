@@ -295,8 +295,11 @@ export default function Dashboard({ currency }) {
         const fecha = `${day}/${month}/${year} ${hours}:${minutes}`;
         const activo = tx.ticker || '';
         const tipo = tx.type || '';
+        const isCashInterest = tipo.toLowerCase() === 'intereses' && (Number(tx.quantity) || 0) === 0;
         const cantidad = Number(tx.quantity) || 0;
-        const precio = Number(tx.price_per_unit) || 0;
+        const precio = isCashInterest
+          ? (Number(tx.total_value) || Number(tx.price_per_unit) || 0)
+          : (Number(tx.price_per_unit) || 0);
         const divisa = tx.operated_currency || 'USD';
         const plataforma = tx.platform || '';
 

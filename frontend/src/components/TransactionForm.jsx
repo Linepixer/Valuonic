@@ -30,12 +30,15 @@ export default function TransactionForm({ onTransactionAdded, exchangeRates }) {
     if (['BTC', 'XRP', 'USDT'].includes(ticker)) rate = exchangeRates.cripto;
     else if (['SPY', 'QQQ', 'GLD'].includes(ticker)) rate = exchangeRates.bolsa;
     else rate = exchangeRates.blue;
-    
+
     if (rate) setExchangeRate(rate);
   }, [ticker, exchangeRates]);
 
   const TICKERS = ['USD', 'SPY', 'QQQ', 'GLD', 'BTC', 'XRP', 'USDT'];
-  const OPERATIONS = ['Compra', 'Intereses', 'Venta', 'Comisión'];
+  const OPERATIONS = ['Compra', 'Intereses', 'Venta', 'Fee de Red'];
+
+  const isIntereses = type === 'Intereses';
+  const isFeeDeRed = type === 'Fee de Red';
 
   const getExchangeRateLabel = () => {
     if (!ticker) return 'Cotización del Dólar';
@@ -51,7 +54,12 @@ export default function TransactionForm({ onTransactionAdded, exchangeRates }) {
   };
 
   const formatFiat = (val) => {
-    return (Math.round((val + Number.EPSILON) * 100) / 100).toString();
+    const rounded = Math.round((val + Number.EPSILON) * 100) / 100;
+    // Preserve sub-cent precision for tiny on-chain network fees so total_value never collapses to 0
+    if (rounded === 0 && val > 0) {
+      return parseFloat(val.toFixed(8)).toString();
+    }
+    return rounded.toString();
   };
 
   // Automatically compute missing values (Quantity, Unit Price, or Total)
@@ -63,7 +71,7 @@ export default function TransactionForm({ onTransactionAdded, exchangeRates }) {
     const q = parseFloat(val);
     const u = parseFloat(unitPrice);
     const t = parseFloat(totalValue);
-    
+
     if (!isNaN(q) && unitPrice !== '') {
       if (!isNaN(u)) setTotalValue(formatFiat(q * u));
     } else if (!isNaN(q) && totalValue !== '') {
@@ -76,14 +84,26 @@ export default function TransactionForm({ onTransactionAdded, exchangeRates }) {
     if ((val.match(/\./g) || []).length > 1) return;
     if (val.includes('.')) {
       const parts = val.split('.');
-      if (parts[1].length > 2) val = parts[0] + '.' + parts[1].slice(0, 2);
+      const maxDecimals = isFeeDeRed ? 6 : 2;
+      if (parts[1].length > maxDecimals) val = parts[0] + '.' + parts[1].slice(0, maxDecimals);
     }
     setUnitPrice(val);
-    
+
     const u = parseFloat(val);
     const q = parseFloat(quantity);
     if (!isNaN(u) && quantity !== '') {
       if (!isNaN(q)) setTotalValue(formatFiat(q * u));
+    }
+  };
+
+  const handleTypeChange = (e) => {
+    const nextType = e.target.value;
+    setType(nextType);
+    setError('');
+    if (nextType === 'Intereses') {
+      setQuantity('');
+      setUnitPrice('');
+      setOperatedCurrency('USD');
     }
   };
 
@@ -92,10 +112,13 @@ export default function TransactionForm({ onTransactionAdded, exchangeRates }) {
     if ((val.match(/\./g) || []).length > 1) return;
     if (val.includes('.')) {
       const parts = val.split('.');
-      if (parts[1].length > 2) val = parts[0] + '.' + parts[1].slice(0, 2);
+      const maxDecimals = isFeeDeRed ? 8 : 2;
+      if (parts[1].length > maxDecimals) val = parts[0] + '.' + parts[1].slice(0, maxDecimals);
     }
     setTotalValue(val);
-    
+
+    if (isIntereses) return;
+
     const t = parseFloat(val);
     const q = parseFloat(quantity);
     if (!isNaN(t) && quantity !== '') {
@@ -108,6 +131,23 @@ export default function TransactionForm({ onTransactionAdded, exchangeRates }) {
     setLoading(true);
     setError('');
 
+    const parsedTotal = parseFloat(totalValue);
+    if (isNaN(parsedTotal) || parsedTotal <= 0) {
+      setError(isIntereses ? 'Ingresá un monto recibido mayor a 0.' : 'El valor total debe ser mayor a 0.');
+      setLoading(false);
+      return;
+    }
+
+    if (!isIntereses) {
+      const parsedQty = parseFloat(quantity);
+      const parsedUnit = parseFloat(unitPrice);
+      if (isNaN(parsedQty) || parsedQty <= 0 || isNaN(parsedUnit) || parsedUnit < 0) {
+        setError('Ingresá una cantidad y precio unitario válidos.');
+        setLoading(false);
+        return;
+      }
+    }
+
     let isoTimestamp = null;
     if (timestamp) {
       isoTimestamp = new Date(timestamp).toISOString();
@@ -119,9 +159,9 @@ export default function TransactionForm({ onTransactionAdded, exchangeRates }) {
         ticker,
         asset_type: getAssetType(ticker),
         type,
-        quantity: parseFloat(quantity),
-        price_per_unit: parseFloat(unitPrice),
-        total_value: parseFloat(totalValue),
+        quantity: isIntereses ? 0 : parseFloat(quantity),
+        price_per_unit: isIntereses ? 0 : parseFloat(unitPrice),
+        total_value: parsedTotal,
         operated_currency: operatedCurrency,
         exchange_rate: exchangeRate ? parseFloat(exchangeRate) : null,
         platform: platform || null,
@@ -137,10 +177,10 @@ export default function TransactionForm({ onTransactionAdded, exchangeRates }) {
   };
 
   const inputStyle = {
-    padding: '0.75rem', 
-    background: 'var(--bg-main)', 
-    border: '1px solid var(--border)', 
-    color: 'var(--text-main)', 
+    padding: '0.75rem',
+    background: 'var(--bg-main)',
+    border: '1px solid var(--border)',
+    color: 'var(--text-main)',
     borderRadius: '4px',
     width: '100%',
     marginTop: '0.5rem'
@@ -154,17 +194,17 @@ export default function TransactionForm({ onTransactionAdded, exchangeRates }) {
   return (
     <div>
       {error && <div className="badge badge-loss" style={{ marginBottom: '1rem', display: 'block', padding: '0.5rem' }}>{error}</div>}
-      
+
       <form onSubmit={handleSubmit} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-        
+
         <div style={{ gridColumn: '1 / -1' }}>
           <label className="summary-label">Fecha y Hora <span className="text-loss">*</span></label>
-          <input 
-            type="datetime-local" 
-            value={timestamp} 
-            onChange={e => setTimestamp(e.target.value)} 
-            style={inputStyle} 
-            required 
+          <input
+            type="datetime-local"
+            value={timestamp}
+            onChange={e => setTimestamp(e.target.value)}
+            style={inputStyle}
+            required
           />
         </div>
 
@@ -172,59 +212,67 @@ export default function TransactionForm({ onTransactionAdded, exchangeRates }) {
           <label className="summary-label">Activo <span className="text-loss">*</span></label>
           <select value={ticker} onChange={e => setTicker(e.target.value)} style={selectTickerStyle} required>
             <option value="" disabled hidden>Ticker de la transacción</option>
-            {TICKERS.map(t => <option key={t} value={t} style={{color: 'var(--text-main)'}}>{t}</option>)}
+            {TICKERS.map(t => <option key={t} value={t} style={{ color: 'var(--text-main)' }}>{t}</option>)}
           </select>
         </div>
 
         <div>
           <label className="summary-label">Tipo de Operación <span className="text-loss">*</span></label>
-          <select value={type} onChange={e => setType(e.target.value)} style={inputStyle} required>
+          <select value={type} onChange={handleTypeChange} style={inputStyle} required>
             {OPERATIONS.map(op => <option key={op} value={op}>{op}</option>)}
           </select>
         </div>
 
-        <div>
-          <label className="summary-label">Cantidad <span className="text-loss">*</span></label>
-          <input 
-            type="text" 
-            value={quantity} 
-            onChange={handleQuantityChange}
-            style={inputStyle} 
-            required 
-            placeholder="Unidades operadas"
-          />
-        </div>
+        {!isIntereses && (
+          <>
+            <div>
+              <label className="summary-label">Cantidad <span className="text-loss">*</span></label>
+              <input
+                type="text"
+                value={quantity}
+                onChange={handleQuantityChange}
+                style={inputStyle}
+                required
+                placeholder={isFeeDeRed ? 'Cantidad descontada' : 'Unidades operadas'}
+              />
+            </div>
+
+            <div>
+              <label className="summary-label">Precio Unitario <span className="text-loss">*</span></label>
+              <input
+                type="text"
+                value={unitPrice}
+                onChange={handleUnitPriceChange}
+                style={inputStyle}
+                required
+                placeholder={isFeeDeRed ? 'Cotización por unidad' : 'Monto operado por unidad'}
+              />
+            </div>
+          </>
+        )}
 
         <div>
-          <label className="summary-label">Precio Unitario <span className="text-loss">*</span></label>
-          <input 
-            type="text" 
-            value={unitPrice} 
-            onChange={handleUnitPriceChange}
-            style={inputStyle} 
-            required 
-            placeholder="Monto operado por unidad"
-          />
-        </div>
-
-        <div>
-          <label className="summary-label">Valor Total <span className="text-loss">*</span></label>
-          <input 
-            type="text" 
-            value={totalValue} 
+          <label className="summary-label">
+            {isIntereses ? 'Monto Recibido' : 'Valor Total'} <span className="text-loss">*</span>
+          </label>
+          <input
+            type="text"
+            value={totalValue}
             onChange={handleTotalValueChange}
-            style={inputStyle} 
-            required 
-            placeholder="Monto total operado"
+            style={inputStyle}
+            required
+            placeholder={isIntereses ? 'Monto cobrado (ej: 35.50)' : (isFeeDeRed ? 'Costo equivalente del fee' : 'Monto total operado')}
           />
         </div>
 
         <div>
-          <label className="summary-label">Moneda Operada <span className="text-loss">*</span></label>
-          <select 
-            value={operatedCurrency} 
-            onChange={e => setOperatedCurrency(e.target.value)} 
-            style={inputStyle} 
+          <label className="summary-label">
+            {isIntereses ? 'Moneda Recibida' : 'Moneda Operada'} <span className="text-loss">*</span>
+          </label>
+          <select
+            value={operatedCurrency}
+            onChange={e => setOperatedCurrency(e.target.value)}
+            style={inputStyle}
             required
           >
             <option value="ARS">ARS</option>
@@ -234,10 +282,10 @@ export default function TransactionForm({ onTransactionAdded, exchangeRates }) {
 
         <div style={{ gridColumn: '1 / -1' }}>
           <label className="summary-label">{getExchangeRateLabel()} <span className="text-loss">*</span></label>
-          <input 
-            type="number" 
-            step="0.01" 
-            value={exchangeRate} 
+          <input
+            type="number"
+            step="0.01"
+            value={exchangeRate}
             onChange={e => {
               let val = e.target.value;
               if (val.includes('.')) {
@@ -245,21 +293,21 @@ export default function TransactionForm({ onTransactionAdded, exchangeRates }) {
                 if (parts[1].length > 2) val = parts[0] + '.' + parts[1].slice(0, 2);
               }
               setExchangeRate(val);
-            }} 
-            style={inputStyle} 
-            required 
+            }}
+            style={inputStyle}
+            required
             placeholder="Precio del dólar al momento de la operación"
           />
         </div>
 
         <div style={{ gridColumn: '1 / -1' }}>
           <label className="summary-label">Plataforma <span className="text-loss">*</span></label>
-          <input 
-            type="text" 
-            value={platform} 
-            onChange={e => setPlatform(e.target.value)} 
-            style={inputStyle} 
-            placeholder="Broker, exchange o entidad en donde se realizó la transacción" 
+          <input
+            type="text"
+            value={platform}
+            onChange={e => setPlatform(e.target.value)}
+            style={inputStyle}
+            placeholder="Broker, exchange o entidad en donde se realizó la transacción"
             required
           />
         </div>

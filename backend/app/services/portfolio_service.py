@@ -129,13 +129,14 @@ def get_portfolio_summary(db: Session, user_id: UUID) -> PortfolioSummary:
             val_usd = qty * price
             val_ars = val_usd * ex_rate
             
-        if t.type.lower() in ["compra", "intereses"]:
+        t_type = t.type.strip().lower()
+        if t_type in ["compra", "intereses"]:
             asset_data[t.asset_id]["quantity"] += qty
-            if t.type.lower() == "compra":
+            if t_type == "compra":
                 asset_data[t.asset_id]["quantity_bought"] += qty
                 asset_data[t.asset_id]["total_spent_ars"] += val_ars
                 asset_data[t.asset_id]["total_spent_usd"] += val_usd
-        elif t.type.lower() in ["venta", "comisión", "comision"]:
+        elif t_type in ["venta", "fee de red"]:
             asset_data[t.asset_id]["quantity"] -= qty
             # but we might want to handle realized gains later.
             
@@ -221,15 +222,24 @@ def get_portfolio_summary(db: Session, user_id: UUID) -> PortfolioSummary:
         asset_obj = asset_map.get(t.asset_id)
         is_stablecoin = asset_obj and asset_obj.ticker.strip().upper() in ["USD", "USDT", "USDC", "DAI"]
 
-        if op_cur == "ARS":
+        t_type = t.type.strip().lower()
+        # Cash dividend/interest payouts carry quantity=0, so derive value from total_value (with legacy price_per_unit fallback)
+        if t_type == "intereses" and qty == 0:
+            raw_val = float(t.total_value or 0) or float(t.price_per_unit or 0)
+            if op_cur == "ARS":
+                val_ars = raw_val
+                val_usd = val_ars / ex_rate if ex_rate else 0.0
+            else:
+                val_usd = raw_val
+                val_ars = val_usd * ex_rate
+        elif op_cur == "ARS":
             val_ars = qty * price
             val_usd = qty if is_stablecoin else (val_ars / ex_rate if ex_rate else 0.0)
         else:
             val_usd = qty * price
             val_ars = val_usd * ex_rate
-            
-        t_type = t.type.lower()
-        if t_type in ["compra", "comisión", "comision"]:
+
+        if t_type in ["compra", "fee de red"]:
             flow_usd = -val_usd
             flow_ars = -val_ars
         elif t_type in ["venta", "intereses"]:
@@ -324,9 +334,10 @@ def get_portfolio_history(db: Session, user_id: UUID) -> PortfolioHistoryRespons
         # 2. Apply transactions for this date
         for t in daily_txs.get(current_date, []):
             qty = float(t.quantity)
-            if t.type.lower() in ["compra", "intereses"]:
+            t_type = t.type.strip().lower()
+            if t_type in ["compra", "intereses"]:
                 current_balances[t.asset_id] += qty
-            elif t.type.lower() in ["venta", "comisión", "comision"]:
+            elif t_type in ["venta", "fee de red"]:
                 current_balances[t.asset_id] -= qty
                 
         # Update last known prices
@@ -418,9 +429,10 @@ def get_portfolio_asset_history(db: Session, user_id: UUID, ticker: str) -> Port
         # 2. Apply transactions for this date
         for t in daily_txs.get(current_date, []):
             qty = float(t.quantity)
-            if t.type.lower() in ["compra", "intereses"]:
+            t_type = t.type.strip().lower()
+            if t_type in ["compra", "intereses"]:
                 current_balances[t.asset_id] += qty
-            elif t.type.lower() in ["venta", "comisión", "comision"]:
+            elif t_type in ["venta", "fee de red"]:
                 current_balances[t.asset_id] -= qty
                 
         # Update last known prices
