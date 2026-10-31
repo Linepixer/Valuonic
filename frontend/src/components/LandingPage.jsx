@@ -127,32 +127,16 @@ export default function LandingPage() {
             </div>
           </div>
 
-          {/* Columna Derecha: Presentación del Producto con Marco Estilizado de Ventana */}
+          {/* Columna Derecha: Presentación del Producto */}
           <div className="hero-mockup-wrapper animate-landing" style={{ animationDelay: '0.3s' }}>
             <div className="hero-mockup-container">
               <div className="hero-mockup-glow"></div>
               <div className="hero-mockup">
-                {/* Barra superior de ventana de navegador */}
-                <div className="mockup-window-header">
-                  <div className="window-dots">
-                    <span className="window-dot red"></span>
-                    <span className="window-dot yellow"></span>
-                    <span className="window-dot green"></span>
-                  </div>
-                  <div className="window-address-pill">
-                    <span className="address-lock"></span>
-                    <span>valuonic.local/portfolio</span>
-                  </div>
-                  <div className="window-header-spacer"></div>
-                </div>
-
-                <div className="mockup-window-body">
-                  <img
-                    src="/dashboard-pc.png?v=6"
-                    alt="Valuonic Dashboard en Computadora"
-                    className="mockup-img-pc"
-                  />
-                </div>
+                <img
+                  src="/dashboard-pc.png?v=6"
+                  alt="Valuonic Dashboard en Computadora"
+                  className="mockup-img-pc"
+                />
 
                 <div className="mockup-mobile-frame">
                   <img

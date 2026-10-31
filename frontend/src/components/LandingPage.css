@@ -394,6 +394,7 @@
   width: 100%;
   height: auto;
   display: block;
+  border-radius: 11px;
 }
 
 /* Framed Mobile Mockup */
