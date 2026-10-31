@@ -148,7 +148,7 @@ export default function LandingPage() {
 
                 <div className="mockup-window-body">
                   <img
-                    src="/dashboard-pc.png?v=2"
+                    src="/dashboard-pc.png?v=6"
                     alt="Valuonic Dashboard en Computadora"
                     className="mockup-img-pc"
                   />
@@ -156,7 +156,7 @@ export default function LandingPage() {
 
                 <div className="mockup-mobile-frame">
                   <img
-                    src="/dashboard-mobile.png?v=2"
+                    src="/dashboard-mobile.png?v=6"
                     alt="Valuonic Dashboard en Celular"
                     className="mockup-img-mobile"
                   />
