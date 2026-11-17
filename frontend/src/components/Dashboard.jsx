@@ -85,6 +85,28 @@ const CUSTOM_ASSET_NAMES = {
   'XRP': 'Ripple'
 };
 
+// Keys match the backend's `periods`; the chart buttons pick one for the whole portfolio screen.
+const PERIOD_LABELS = {
+  '1S': 'última semana',
+  '1M': 'último mes',
+  '3M': 'últimos 3 meses',
+  '6M': 'últimos 6 meses',
+  '1A': 'último año',
+  'MAX': 'desde el inicio',
+};
+
+const PERIOD_COLUMN_SUFFIX = { '1S': '1S', '1M': '1M', '3M': '3M', '6M': '6M', '1A': '1A', 'MAX': 'total' };
+
+const getPeriodGain = (periods, period, isArs) => {
+  const data = periods?.[period];
+  return {
+    gain: (isArs ? data?.gain_ars : data?.gain_usd) ?? 0,
+    pct: (isArs ? data?.gain_pct_ars : data?.gain_pct_usd) ?? null,
+  };
+};
+
+const formatPct = (value) => value.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
 const getAssetIcon = (ticker) => {
   const cryptoUrl = {
     'BTC': 'https://cryptologos.cc/logos/bitcoin-btc-logo.svg?v=032',
@@ -166,6 +188,7 @@ export default function Dashboard({ currency }) {
   const [selectedAsset, setSelectedAsset] = useState(null);
   const [refreshTransactions, setRefreshTransactions] = useState(0);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 1024);
+  const [period, setPeriod] = useState('1M');
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -351,9 +374,12 @@ export default function Dashboard({ currency }) {
   const isArs = currency === 'ARS';
   const totalValue = isArs ? portfolio.total_value_ars : portfolio.total_value_usd;
 
-  const totalProfit = portfolio.assets.reduce((acc, asset) => acc + (isArs ? asset.potential_profit_ars : asset.potential_profit_usd), 0);
-  const totalAvgCost = portfolio.assets.reduce((acc, asset) => acc + ((isArs ? asset.average_purchase_price_ars : asset.average_purchase_price_usd) * asset.quantity), 0);
-  const totalProfitPct = totalAvgCost > 0 ? (totalProfit / totalAvgCost) * 100 : 0;
+  const { gain: totalGain, pct: totalGainPct } = getPeriodGain(portfolio.periods, period, isArs);
+  const periodStart = portfolio.periods?.[period]?.start_date;
+  // A period that reaches back before the first operation is the whole history, so say so.
+  const coversFullHistory = !periodStart || history.length === 0 || periodStart < history[0].date;
+  const periodLabel = coversFullHistory ? PERIOD_LABELS.MAX : PERIOD_LABELS[period];
+  const gainColumnSuffix = PERIOD_COLUMN_SUFFIX[period];
 
   const getAssetType = (ticker) => {
     const asset = allAssets.find(a => a.ticker === ticker);
@@ -426,9 +452,11 @@ export default function Dashboard({ currency }) {
                 </div>
                 <div className="flex-row" style={{ flexWrap: 'wrap' }}>
                   <h1 className="summary-value">{formatCurrency(totalValue, currency)}</h1>
-                  <div className={`badge ${totalProfit >= 0 ? 'badge-profit' : 'badge-loss'}`} style={{ fontSize: '1rem', padding: '0.2rem 0.6rem' }}>
-                    {totalProfit >= 0 ? <ArrowUpRight size={16} /> : <ArrowDownRight size={16} />}
-                    {formatCurrency(Math.abs(totalProfit), currency)} ({totalProfitPct.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%)
+                  <div className={`badge ${totalGain >= 0 ? 'badge-profit' : 'badge-loss'}`} style={{ fontSize: '1rem', padding: '0.2rem 0.6rem' }}>
+                    {totalGain >= 0 ? <ArrowUpRight size={16} /> : <ArrowDownRight size={16} />}
+                    {formatCurrency(Math.abs(totalGain), currency)}
+                    {totalGainPct !== null && ` (${formatPct(totalGainPct)}%)`}
+                    <span style={{ color: 'var(--text-muted)', fontWeight: 400, marginLeft: '0.35rem' }}>· {periodLabel}</span>
                   </div>
                 </div>
               </div>
@@ -436,7 +464,14 @@ export default function Dashboard({ currency }) {
             </div>
 
             <div style={{ marginBottom: '1rem' }}>
-              <PortfolioChart data={history} isArs={isArs} />
+              <PortfolioChart
+                data={history}
+                isArs={isArs}
+                range={period}
+                onRangeChange={setPeriod}
+                startDate={periodStart}
+                isGain={totalGain >= 0}
+              />
             </div>
 
             <div className="summary-cards">
@@ -506,8 +541,8 @@ export default function Dashboard({ currency }) {
                       <th className="text-right">Precio Actual</th>
                       <th className="text-right">Promedio Compra</th>
                       <th className="text-right">Valor Total</th>
-                      <th className="text-right">Ganancia</th>
-                      <th className="text-right">% Ganancia</th>
+                      <th className="text-right">Ganancia {gainColumnSuffix}</th>
+                      <th className="text-right">% Ganancia {gainColumnSuffix}</th>
                       <th className="text-right">% Portafolio</th>
                     </tr>
                   </thead>
@@ -527,8 +562,7 @@ export default function Dashboard({ currency }) {
                         const currentPrice = isArs ? asset.current_price_ars : asset.current_price_usd;
                         const avgPrice = isArs ? asset.average_purchase_price_ars : asset.average_purchase_price_usd;
                         const value = isArs ? asset.total_value_ars : asset.total_value_usd;
-                        const profit = isArs ? asset.potential_profit_ars : asset.potential_profit_usd;
-                        const profitPct = isArs ? asset.profit_percentage_ars : asset.profit_percentage_usd;
+                        const { gain: profit, pct: profitPct } = getPeriodGain(asset.periods, period, isArs);
 
                         return (
                           <tr
@@ -550,9 +584,13 @@ export default function Dashboard({ currency }) {
                               {profit > 0 ? '+' : ''}{formatCurrency(profit, currency)}
                             </td>
                             <td className="text-right">
-                              <span className={`badge ${profitPct >= 0 ? 'badge-profit' : 'badge-loss'}`}>
-                                {profitPct > 0 ? '+' : ''}{profitPct.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%
-                              </span>
+                              {profitPct === null ? (
+                                <span className="text-muted">—</span>
+                              ) : (
+                                <span className={`badge ${profitPct >= 0 ? 'badge-profit' : 'badge-loss'}`}>
+                                  {profitPct > 0 ? '+' : ''}{formatPct(profitPct)}%
+                                </span>
+                              )}
                             </td>
                             <td className="text-right text-muted">{asset.portfolio_percentage.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%</td>
                           </tr>
@@ -575,8 +613,7 @@ export default function Dashboard({ currency }) {
                     return valB - valA;
                   }).map(asset => {
                     const value = isArs ? asset.total_value_ars : asset.total_value_usd;
-                    const profit = isArs ? asset.potential_profit_ars : asset.potential_profit_usd;
-                    const profitPct = isArs ? asset.profit_percentage_ars : asset.profit_percentage_usd;
+                    const { gain: profit, pct: profitPct } = getPeriodGain(asset.periods, period, isArs);
 
                     return (
                       <div
@@ -599,9 +636,11 @@ export default function Dashboard({ currency }) {
                           </div>
                           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
                             <span className="font-semibold" style={{ fontSize: '1.2rem', color: 'var(--text-main)' }}>{formatCurrency(value, currency)}</span>
-                            <span className={`badge ${profitPct >= 0 ? 'badge-profit' : 'badge-loss'}`} style={{ marginTop: '0.3rem', fontSize: '0.75rem', padding: '0.2rem 0.5rem' }}>
-                              {profitPct > 0 ? '+' : ''}{profitPct.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%
-                            </span>
+                            {profitPct !== null && (
+                              <span className={`badge ${profitPct >= 0 ? 'badge-profit' : 'badge-loss'}`} style={{ marginTop: '0.3rem', fontSize: '0.75rem', padding: '0.2rem 0.5rem' }}>
+                                {profitPct > 0 ? '+' : ''}{formatPct(profitPct)}%
+                              </span>
+                            )}
                           </div>
                         </div>
 
@@ -611,7 +650,7 @@ export default function Dashboard({ currency }) {
                             <span className="font-semibold" style={{ fontSize: '0.95rem', color: 'var(--text-main)' }}>{formatQuantity(asset.quantity, asset.ticker)}</span>
                           </div>
                           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
-                            <span className="text-muted" style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Ganancia</span>
+                            <span className="text-muted" style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Ganancia {gainColumnSuffix}</span>
                             <span className={`font-semibold ${profit >= 0 ? 'text-profit' : 'text-loss'}`} style={{ fontSize: '0.95rem' }}>
                               {profit > 0 ? '+' : ''}{formatCurrency(profit, currency)}
                             </span>

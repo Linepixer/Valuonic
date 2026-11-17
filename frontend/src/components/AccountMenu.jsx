@@ -24,6 +24,7 @@ export default function AccountMenu({ user, onLogout }) {
       <div style={{ position: 'relative' }} ref={menuRef}>
         <button
           onClick={() => setIsOpen(!isOpen)}
+          aria-label={`Cuenta de ${user?.name || 'Usuario'}`}
           className="flex-row"
           style={{
             background: 'transparent',
@@ -36,7 +37,7 @@ export default function AccountMenu({ user, onLogout }) {
           }}
         >
           <User size={18} />
-          <span style={{ fontWeight: 500 }}>{user?.name || 'Usuario'}</span>
+          <span className="account-menu-name" style={{ fontWeight: 500 }}>{user?.name || 'Usuario'}</span>
           <ChevronDown size={16} className="text-muted" />
         </button>
 

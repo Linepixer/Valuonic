@@ -1,17 +1,34 @@
+import calendar
 import logging
+from datetime import date, datetime, timedelta
 from sqlalchemy.orm import Session
 from sqlalchemy import func
-from typing import Dict, List, Optional
+from typing import Dict, Iterable, List, Optional, Tuple
 from collections import defaultdict
 from uuid import UUID
 
+from fastapi import HTTPException
+
 from app.models.transaction import Transaction
 from app.models.asset import Asset
+from app.models.asset_price import AssetPrice
 from app.models.corporate_event import CorporateEvent
-from app.schemas.portfolio import PortfolioAsset, PortfolioSummary
+from app.schemas.portfolio import (
+    PeriodGain,
+    PortfolioAsset,
+    PortfolioHistoryPoint,
+    PortfolioHistoryResponse,
+    PortfolioPeriodGain,
+    PortfolioSummary,
+)
 from app.services.price_fetcher import PriceFetcher
 
 logger = logging.getLogger(__name__)
+
+# Same keys and order as the period buttons in the frontend.
+PERIODS = ("1S", "1M", "3M", "6M", "1A", "MAX")
+_PERIOD_MONTHS = {"1M": 1, "3M": 3, "6M": 6, "1A": 12}
+STABLECOINS = {"USD", "USDT", "USDC", "DAI"}
 
 def _calculate_xirr(cash_flows: List[tuple]) -> float:
     """
@@ -71,6 +88,213 @@ def _calculate_xirr(cash_flows: List[tuple]) -> float:
             
     return ((low + high) / 2.0) * 100.0
 
+
+def _normalize_currency(raw: Optional[str]) -> str:
+    op_cur = raw.upper().strip() if raw else "USD"
+    if "AR" in op_cur:
+        return "ARS"
+    if "US" in op_cur:
+        return "USD"
+    return op_cur
+
+
+def _transaction_values(t: Transaction, is_stablecoin: bool, fallback_rate: float) -> Tuple[float, float]:
+    """USD and ARS value of a transaction at the exchange rate of the day it happened."""
+    qty = float(t.quantity)
+    price = float(t.price_per_unit)
+    ex_rate = float(t.exchange_rate) if t.exchange_rate else fallback_rate
+    op_cur = _normalize_currency(t.operated_currency)
+
+    # Cash dividend/interest payouts carry quantity=0, so derive value from total_value (with legacy price_per_unit fallback)
+    if t.type.strip().lower() == "intereses" and qty == 0:
+        raw_val = float(t.total_value or 0) or float(t.price_per_unit or 0)
+        if op_cur == "ARS":
+            return (raw_val / ex_rate if ex_rate else 0.0), raw_val
+        return raw_val, raw_val * ex_rate
+
+    if op_cur == "ARS":
+        val_ars = qty * price
+        return (qty if is_stablecoin else (val_ars / ex_rate if ex_rate else 0.0)), val_ars
+    val_usd = qty * price
+    return val_usd, val_usd * ex_rate
+
+
+def _iter_daily_positions(transactions: Iterable[Transaction], prices: Iterable[AssetPrice],
+                          splits: Iterable[CorporateEvent], start_date: date, end_date: date):
+    """
+    Yields (day, balances, last_known_prices) for every day in [start_date, end_date]: that day's splits
+    apply first, then its transactions. The chart and the period gains both read holdings from here, so a
+    period always starts from the same value the chart shows. The dicts are updated in place on the next
+    step, so copy what you need before advancing.
+    """
+    daily_prices = defaultdict(dict)
+    for p in prices:
+        daily_prices[p.timestamp.date()][p.asset_id] = {"usd": float(p.price_usd), "ars": float(p.price_ars)}
+    daily_splits = defaultdict(list)
+    for split in splits:
+        daily_splits[split.timestamp.date()].append(split)
+    daily_txs = defaultdict(list)
+    for t in transactions:
+        daily_txs[t.timestamp.date()].append(t)
+
+    balances = defaultdict(float)
+    last_known_prices = {}
+    day = start_date
+    while day <= end_date:
+        for split in daily_splits.get(day, []):
+            if balances[split.asset_id] != 0:
+                balances[split.asset_id] *= float(split.ratio)
+        for t in daily_txs.get(day, []):
+            qty = float(t.quantity)
+            t_type = t.type.strip().lower()
+            if t_type in ("compra", "intereses"):
+                balances[t.asset_id] += qty
+            elif t_type in ("venta", "fee de red"):
+                balances[t.asset_id] -= qty
+        last_known_prices.update(daily_prices.get(day, {}))
+        yield day, balances, last_known_prices
+        day += timedelta(days=1)
+
+
+def _value_positions(balances: Dict[UUID, float], known_prices: Dict[UUID, Dict[str, float]]) -> Tuple[float, float]:
+    val_usd = 0.0
+    val_ars = 0.0
+    for asset_id, qty in balances.items():
+        if qty > 0:
+            p_data = known_prices.get(asset_id)
+            if p_data:
+                val_usd += qty * p_data["usd"]
+                val_ars += qty * p_data["ars"]
+    return val_usd, val_ars
+
+
+def _months_before(day: date, months: int) -> date:
+    year, month_index = divmod(day.year * 12 + day.month - 1 - months, 12)
+    month = month_index + 1
+    return date(year, month, min(day.day, calendar.monthrange(year, month)[1]))
+
+
+def _period_start_dates(today: date, first_day: date) -> Dict[str, date]:
+    """Each period's baseline is the value at the end of this day; transactions after it are the period's."""
+    starts = {"1S": today - timedelta(days=7), "MAX": first_day - timedelta(days=1)}
+    for key, months in _PERIOD_MONTHS.items():
+        starts[key] = _months_before(today, months)
+    return {key: starts[key] for key in PERIODS}
+
+
+def _first_price_after(prices: List[AssetPrice], asset_id: UUID, day: date) -> Optional[Dict[str, float]]:
+    for p in prices:
+        if p.asset_id == asset_id and p.timestamp.date() > day:
+            return {"usd": float(p.price_usd), "ars": float(p.price_ars)}
+    return None
+
+
+def _cents(value: float) -> float:
+    # + 0.0 turns -0.0 into 0.0, otherwise the UI renders "-USD 0,00".
+    return round(value, 2) + 0.0
+
+
+def _percentage(gain: float, base: float) -> Optional[float]:
+    # With nothing at stake (e.g. units that only came from interest) a percentage has no meaning.
+    if base <= 1e-9:
+        return None
+    return round(gain / base * 100.0, 4) + 0.0
+
+
+def _compute_period_gains(
+    transactions: List[Transaction],
+    prices: List[AssetPrice],
+    splits: List[CorporateEvent],
+    tx_values: Dict[UUID, Tuple[float, float]],
+    end_values: Dict[UUID, Tuple[float, float]],
+    live_prices: Dict[UUID, Dict[str, float]],
+    today: date,
+) -> Tuple[Dict[str, PortfolioPeriodGain], Dict[UUID, Dict[str, PeriodGain]]]:
+    """
+    Gain over a period = value today - value at the start - money put in (buys) + money taken out
+    (sales and interest paid in cash), so buying never reads as gain and selling never as a loss.
+    Interest paid in units and network fees need no flow: they already change the holdings.
+    The percentage is measured against what was at stake: the starting value plus what was bought.
+    `transactions` must be in chronological order.
+    """
+    first_day = min((t.timestamp.date() for t in transactions), default=today)
+    starts = _period_start_dates(today, first_day)
+
+    start_values: Dict[str, Dict[UUID, Tuple[float, float]]] = {key: {} for key in PERIODS}
+    keys_by_day = defaultdict(list)
+    for key, start in starts.items():
+        if first_day <= start <= today:
+            keys_by_day[start].append(key)
+    if keys_by_day:
+        for day, balances, known_prices in _iter_daily_positions(transactions, prices, splits, first_day, max(keys_by_day)):
+            if day not in keys_by_day:
+                continue
+            snapshot = {}
+            for asset_id, qty in balances.items():
+                if qty <= 0:
+                    continue
+                # The chart leaves out holdings that have no price yet; valuing them at 0 here would turn
+                # the whole position into fake gain, so fall back to the nearest price we do have.
+                p_data = known_prices.get(asset_id) or _first_price_after(prices, asset_id, day) or live_prices.get(asset_id)
+                if p_data:
+                    snapshot[asset_id] = (qty * p_data["usd"], qty * p_data["ars"])
+            for key in keys_by_day[day]:
+                start_values[key] = snapshot
+
+    portfolio: Dict[str, PortfolioPeriodGain] = {}
+    per_asset: Dict[UUID, Dict[str, PeriodGain]] = defaultdict(dict)
+    for key in PERIODS:
+        start = starts[key]
+        bought = defaultdict(lambda: [0.0, 0.0])
+        taken_out = defaultdict(lambda: [0.0, 0.0])
+        for t in transactions:
+            if t.timestamp.date() <= start:
+                continue
+            t_type = t.type.strip().lower()
+            val_usd, val_ars = tx_values[t.id]
+            if t_type == "compra":
+                flows = bought
+            elif t_type == "venta" or (t_type == "intereses" and float(t.quantity) == 0):
+                flows = taken_out
+            else:
+                continue
+            flows[t.asset_id][0] += val_usd
+            flows[t.asset_id][1] += val_ars
+
+        totals = {"gain_usd": 0.0, "gain_ars": 0.0, "base_usd": 0.0, "base_ars": 0.0}
+        for asset_id in set(start_values[key]) | set(bought) | set(taken_out) | set(end_values):
+            start_usd, start_ars = start_values[key].get(asset_id, (0.0, 0.0))
+            end_usd, end_ars = end_values.get(asset_id, (0.0, 0.0))
+            in_usd, in_ars = bought.get(asset_id, (0.0, 0.0))
+            out_usd, out_ars = taken_out.get(asset_id, (0.0, 0.0))
+
+            gain_usd = end_usd - start_usd - in_usd + out_usd
+            gain_ars = end_ars - start_ars - in_ars + out_ars
+            base_usd = start_usd + in_usd
+            base_ars = start_ars + in_ars
+
+            per_asset[asset_id][key] = PeriodGain(
+                gain_usd=_cents(gain_usd),
+                gain_ars=_cents(gain_ars),
+                gain_pct_usd=_percentage(gain_usd, base_usd),
+                gain_pct_ars=_percentage(gain_ars, base_ars),
+            )
+            totals["gain_usd"] += gain_usd
+            totals["gain_ars"] += gain_ars
+            totals["base_usd"] += base_usd
+            totals["base_ars"] += base_ars
+
+        portfolio[key] = PortfolioPeriodGain(
+            start_date=start.isoformat(),
+            gain_usd=_cents(totals["gain_usd"]),
+            gain_ars=_cents(totals["gain_ars"]),
+            gain_pct_usd=_percentage(totals["gain_usd"], totals["base_usd"]),
+            gain_pct_ars=_percentage(totals["gain_ars"], totals["base_ars"]),
+        )
+
+    return portfolio, per_asset
+
+
 def get_portfolio_summary(db: Session, user_id: UUID) -> PortfolioSummary:
     rates = PriceFetcher.get_dollar_rates()
     current_usd_to_ars = rates.get("cripto") or rates.get("blue") or rates.get("bolsa") or 1500.0
@@ -119,8 +343,8 @@ def get_portfolio_summary(db: Session, user_id: UUID) -> PortfolioSummary:
             op_cur = "USD"
         
         asset_obj = asset_map.get(t.asset_id)
-        is_stablecoin = asset_obj and asset_obj.ticker.strip().upper() in ["USD", "USDT", "USDC", "DAI"]
-        
+        is_stablecoin = asset_obj and asset_obj.ticker.strip().upper() in STABLECOINS
+
         # Calculate value of this transaction in both currencies
         if op_cur == "ARS":
             val_ars = qty * price
@@ -141,12 +365,14 @@ def get_portfolio_summary(db: Session, user_id: UUID) -> PortfolioSummary:
             # but we might want to handle realized gains later.
             
     portfolio_assets = []
+    held_assets: List[Tuple[UUID, PortfolioAsset]] = []
+    end_values: Dict[UUID, Tuple[float, float]] = {}
     total_portfolio_usd = 0.0
     total_portfolio_ars = 0.0
-    
+
     # Cache fetched prices to minimize redundant API calls
-    current_prices: Dict[UUID, float] = {}
-    
+    current_prices: Dict[UUID, Dict[str, float]] = {}
+
     for asset_id, data in asset_data.items():
         if data["quantity"] <= 0:
             continue
@@ -199,7 +425,9 @@ def get_portfolio_summary(db: Session, user_id: UUID) -> PortfolioSummary:
             portfolio_percentage=0.0
         )
         portfolio_assets.append(p_asset)
-        
+        held_assets.append((asset_id, p_asset))
+        end_values[asset_id] = (val_usd, val_ars)
+
     for pa in portfolio_assets:
         if total_portfolio_usd > 0:
             pa.portfolio_percentage = (pa.total_value_usd / total_portfolio_usd) * 100
@@ -208,37 +436,15 @@ def get_portfolio_summary(db: Session, user_id: UUID) -> PortfolioSummary:
     ars_flows = []
     usd_flows_by_asset = defaultdict(list)
     ars_flows_by_asset = defaultdict(list)
-    
+    tx_values: Dict[UUID, Tuple[float, float]] = {}
+
     for t in transactions:
-        qty = float(t.quantity)
-        price = float(t.price_per_unit)
-        ex_rate = float(t.exchange_rate) if t.exchange_rate else current_usd_to_ars
-        op_cur = t.operated_currency.upper().strip() if t.operated_currency else "USD"
-        if "AR" in op_cur:
-            op_cur = "ARS"
-        elif "US" in op_cur:
-            op_cur = "USD"
-        
         asset_obj = asset_map.get(t.asset_id)
-        is_stablecoin = asset_obj and asset_obj.ticker.strip().upper() in ["USD", "USDT", "USDC", "DAI"]
+        is_stablecoin = bool(asset_obj and asset_obj.ticker.strip().upper() in STABLECOINS)
+        val_usd, val_ars = _transaction_values(t, is_stablecoin, current_usd_to_ars)
+        tx_values[t.id] = (val_usd, val_ars)
 
         t_type = t.type.strip().lower()
-        # Cash dividend/interest payouts carry quantity=0, so derive value from total_value (with legacy price_per_unit fallback)
-        if t_type == "intereses" and qty == 0:
-            raw_val = float(t.total_value or 0) or float(t.price_per_unit or 0)
-            if op_cur == "ARS":
-                val_ars = raw_val
-                val_usd = val_ars / ex_rate if ex_rate else 0.0
-            else:
-                val_usd = raw_val
-                val_ars = val_usd * ex_rate
-        elif op_cur == "ARS":
-            val_ars = qty * price
-            val_usd = qty if is_stablecoin else (val_ars / ex_rate if ex_rate else 0.0)
-        else:
-            val_usd = qty * price
-            val_ars = val_usd * ex_rate
-
         if t_type in ["compra", "fee de red"]:
             flow_usd = -val_usd
             flow_ars = -val_ars
@@ -275,19 +481,38 @@ def get_portfolio_summary(db: Session, user_id: UUID) -> PortfolioSummary:
             if a_ars_flows:
                 a_ars_flows.append((today, p_asset.total_value_ars))
                 p_asset.xirr_ars = _calculate_xirr(a_ars_flows)
-    
+
+    user_asset_ids = {t.asset_id for t in transactions}
+    price_rows = (
+        db.query(AssetPrice)
+        .filter(AssetPrice.asset_id.in_(user_asset_ids))
+        .order_by(AssetPrice.timestamp)
+        .all()
+        if user_asset_ids else []
+    )
+    # Same split filter as the history chart, so both walk identical holdings.
+    chart_splits = [e for e in corporate_events if e.type == "split"]
+    periods, periods_by_asset = _compute_period_gains(
+        sorted(transactions, key=lambda t: t.timestamp),
+        price_rows,
+        chart_splits,
+        tx_values,
+        end_values,
+        current_prices,
+        today,
+    )
+    for asset_id, p_asset in held_assets:
+        p_asset.periods = periods_by_asset.get(asset_id, {})
+
     return PortfolioSummary(
         assets=portfolio_assets,
         total_value_ars=total_portfolio_ars,
         total_value_usd=total_portfolio_usd,
         exchange_rates=rates,
         xirr_usd=xirr_usd,
-        xirr_ars=xirr_ars
+        xirr_ars=xirr_ars,
+        periods=periods,
     )
-
-from datetime import datetime, timedelta
-from app.models.asset_price import AssetPrice
-from app.schemas.portfolio import PortfolioHistoryResponse, PortfolioHistoryPoint
 
 def get_portfolio_history(db: Session, user_id: UUID) -> PortfolioHistoryResponse:
     transactions = db.query(Transaction).filter(Transaction.user_id == user_id).order_by(Transaction.timestamp).all()
@@ -295,73 +520,20 @@ def get_portfolio_history(db: Session, user_id: UUID) -> PortfolioHistoryRespons
         return PortfolioHistoryResponse(history=[])
         
     prices = db.query(AssetPrice).order_by(AssetPrice.timestamp).all()
-    
-    # Load corporate events
     corporate_events = db.query(CorporateEvent).filter(CorporateEvent.type == "split").all()
-    daily_splits = defaultdict(list)
-    for event in corporate_events:
-        daily_splits[event.timestamp.date()].append(event)
     
     # We will compute daily values from the first transaction to today
     start_date = transactions[0].timestamp.date()
     end_date = datetime.now().date()
-    
-    # Map latest prices by date
-    daily_prices = defaultdict(dict)
-    for p in prices:
-        d = p.timestamp.date()
-        daily_prices[d][p.asset_id] = {
-            "usd": float(p.price_usd),
-            "ars": float(p.price_ars)
-        }
-        
-    # Group transactions by date
-    daily_txs = defaultdict(list)
-    for t in transactions:
-        daily_txs[t.timestamp.date()].append(t)
-        
+
     history = []
-    current_balances = defaultdict(float)
-    last_known_prices = {}
-    
-    current_date = start_date
-    while current_date <= end_date:
-        # 1. Apply splits for this date FIRST (assuming splits take effect at start of day)
-        for split in daily_splits.get(current_date, []):
-            if current_balances[split.asset_id] != 0:
-                current_balances[split.asset_id] *= float(split.ratio)
-                
-        # 2. Apply transactions for this date
-        for t in daily_txs.get(current_date, []):
-            qty = float(t.quantity)
-            t_type = t.type.strip().lower()
-            if t_type in ["compra", "intereses"]:
-                current_balances[t.asset_id] += qty
-            elif t_type in ["venta", "fee de red"]:
-                current_balances[t.asset_id] -= qty
-                
-        # Update last known prices
-        if current_date in daily_prices:
-            for asset_id, p_data in daily_prices[current_date].items():
-                last_known_prices[asset_id] = p_data
-                
-        # Calculate portfolio value
-        val_usd = 0.0
-        val_ars = 0.0
-        for asset_id, qty in current_balances.items():
-            if qty > 0:
-                p_data = last_known_prices.get(asset_id)
-                if p_data:
-                    val_usd += qty * p_data["usd"]
-                    val_ars += qty * p_data["ars"]
-                    
+    for day, balances, known_prices in _iter_daily_positions(transactions, prices, corporate_events, start_date, end_date):
+        val_usd, val_ars = _value_positions(balances, known_prices)
         history.append(PortfolioHistoryPoint(
-            date=current_date.strftime("%Y-%m-%d"),
+            date=day.strftime("%Y-%m-%d"),
             total_value_usd=val_usd,
             total_value_ars=val_ars
         ))
-        
-        current_date += timedelta(days=1)
         
     # Overwrite the last data point with the live summary to ensure chart consistency with dashboard totals.
     if history and history[-1].date == end_date.strftime("%Y-%m-%d"):
@@ -371,7 +543,6 @@ def get_portfolio_history(db: Session, user_id: UUID) -> PortfolioHistoryRespons
         
     return PortfolioHistoryResponse(history=history)
 
-from fastapi import HTTPException
 
 def get_portfolio_asset_history(db: Session, user_id: UUID, ticker: str) -> PortfolioHistoryResponse:
     asset = db.query(Asset).filter(func.upper(Asset.ticker) == ticker.upper()).first()
@@ -387,76 +558,23 @@ def get_portfolio_asset_history(db: Session, user_id: UUID, ticker: str) -> Port
         return PortfolioHistoryResponse(history=[])
         
     prices = db.query(AssetPrice).filter(AssetPrice.asset_id == asset.id).order_by(AssetPrice.timestamp).all()
-    
-    # Load corporate events for this asset
     corporate_events = db.query(CorporateEvent).filter(
         CorporateEvent.asset_id == asset.id,
         CorporateEvent.type == "split"
     ).all()
-    daily_splits = defaultdict(list)
-    for event in corporate_events:
-        daily_splits[event.timestamp.date()].append(event)
     
     # We will compute daily values from the first transaction to today
     start_date = transactions[0].timestamp.date()
     end_date = datetime.now().date()
-    
-    # Map prices by date
-    daily_prices = defaultdict(dict)
-    for p in prices:
-        d = p.timestamp.date()
-        daily_prices[d][p.asset_id] = {
-            "usd": float(p.price_usd),
-            "ars": float(p.price_ars)
-        }
-        
-    # Group transactions by date
-    daily_txs = defaultdict(list)
-    for t in transactions:
-        daily_txs[t.timestamp.date()].append(t)
-        
+
     history = []
-    current_balances = defaultdict(float)
-    last_known_prices = {}
-    
-    current_date = start_date
-    while current_date <= end_date:
-        # 1. Apply splits for this date FIRST
-        for split in daily_splits.get(current_date, []):
-            if current_balances[split.asset_id] != 0:
-                current_balances[split.asset_id] *= float(split.ratio)
-                
-        # 2. Apply transactions for this date
-        for t in daily_txs.get(current_date, []):
-            qty = float(t.quantity)
-            t_type = t.type.strip().lower()
-            if t_type in ["compra", "intereses"]:
-                current_balances[t.asset_id] += qty
-            elif t_type in ["venta", "fee de red"]:
-                current_balances[t.asset_id] -= qty
-                
-        # Update last known prices
-        if current_date in daily_prices:
-            for asset_id, p_data in daily_prices[current_date].items():
-                last_known_prices[asset_id] = p_data
-                
-        # Calculate portfolio value
-        val_usd = 0.0
-        val_ars = 0.0
-        for asset_id, qty in current_balances.items():
-            if qty > 0:
-                p_data = last_known_prices.get(asset_id)
-                if p_data:
-                    val_usd += qty * p_data["usd"]
-                    val_ars += qty * p_data["ars"]
-                    
+    for day, balances, known_prices in _iter_daily_positions(transactions, prices, corporate_events, start_date, end_date):
+        val_usd, val_ars = _value_positions(balances, known_prices)
         history.append(PortfolioHistoryPoint(
-            date=current_date.strftime("%Y-%m-%d"),
+            date=day.strftime("%Y-%m-%d"),
             total_value_usd=val_usd,
             total_value_ars=val_ars
         ))
-        
-        current_date += timedelta(days=1)
         
     # Overwrite the last data point with the live summary to ensure chart consistency.
     if history and history[-1].date == end_date.strftime("%Y-%m-%d"):

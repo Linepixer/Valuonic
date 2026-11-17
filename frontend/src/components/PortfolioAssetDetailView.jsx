@@ -51,8 +51,10 @@ export default function PortfolioAssetDetailView({ asset, currency, onBack, onGo
   const currentPrice = isArs ? asset.current_price_ars : asset.current_price_usd;
   const avgPrice = isArs ? asset.average_purchase_price_ars : asset.average_purchase_price_usd;
   const value = isArs ? asset.total_value_ars : asset.total_value_usd;
-  const profit = isArs ? asset.potential_profit_ars : asset.potential_profit_usd;
-  const profitPct = isArs ? asset.profit_percentage_ars : asset.profit_percentage_usd;
+  // Same all-time figure as the portfolio table's "Ganancia total": includes sales and interest.
+  const allTime = asset.periods?.MAX;
+  const profit = allTime ? (isArs ? allTime.gain_ars : allTime.gain_usd) : (isArs ? asset.potential_profit_ars : asset.potential_profit_usd);
+  const profitPct = allTime ? (isArs ? allTime.gain_pct_ars : allTime.gain_pct_usd) : (isArs ? asset.profit_percentage_ars : asset.profit_percentage_usd);
   const isCrypto = ['BTC', 'XRP'].includes(asset.ticker);
 
   return (
@@ -119,9 +121,11 @@ export default function PortfolioAssetDetailView({ asset, currency, onBack, onGo
                 <div className={`font-semibold ${profit >= 0 ? 'text-profit' : 'text-loss'}`} style={{ fontSize: '1.8rem', margin: 0, lineHeight: 1 }}>
                   {profit > 0 ? '+' : ''}{formatCurrency(profit)}
                 </div>
-                <div className={`badge ${profit >= 0 ? 'badge-profit' : 'badge-loss'}`} style={{ fontSize: '0.9rem', padding: '0.3rem 0.6rem' }}>
-                  {profit > 0 ? '+' : ''}{profitPct.toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}%
-                </div>
+                {profitPct !== null && profitPct !== undefined && (
+                  <div className={`badge ${profit >= 0 ? 'badge-profit' : 'badge-loss'}`} style={{ fontSize: '0.9rem', padding: '0.3rem 0.6rem' }}>
+                    {profit > 0 ? '+' : ''}{profitPct.toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}%
+                  </div>
+                )}
               </div>
             </div>
 

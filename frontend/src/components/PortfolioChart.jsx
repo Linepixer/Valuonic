@@ -1,8 +1,11 @@
 import { useState, useMemo } from 'react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
-export default function PortfolioChart({ data, isArs }) {
-  const [timeRange, setTimeRange] = useState('MAX');
+export default function PortfolioChart({ data, isArs, range, onRangeChange, startDate, isGain }) {
+  const [internalRange, setInternalRange] = useState('MAX');
+  // The portfolio screen owns the period because it also drives the header and the table; other views keep their own.
+  const timeRange = range ?? internalRange;
+  const setTimeRange = onRangeChange ?? setInternalRange;
 
   const isEmpty = !data || data.length === 0;
 
@@ -16,6 +19,11 @@ export default function PortfolioChart({ data, isArs }) {
   ] : data, [data, isEmpty]);
 
   const filteredData = useMemo(() => {
+    // The backend's period start is the baseline of the gain shown above, so the chart starts exactly there.
+    if (startDate) {
+      const fromStart = chartData.filter(d => d.date >= startDate);
+      return fromStart.length >= 2 ? fromStart : chartData.slice(-2);
+    }
     if (timeRange === 'MAX') return chartData;
     
     const lastItem = chartData[chartData.length - 1];
@@ -31,13 +39,14 @@ export default function PortfolioChart({ data, isArs }) {
     const filtered = chartData.filter(d => d.date >= targetString);
     
     return filtered.length >= 2 ? filtered : chartData.slice(-2);
-  }, [chartData, timeRange]);
+  }, [chartData, timeRange, startDate]);
 
   const dataKey = isArs ? 'total_value_ars' : 'total_value_usd';
   
   const firstValue = filteredData[0]?.[dataKey] ?? 0;
   const lastValue = filteredData[filteredData.length - 1]?.[dataKey] ?? 0;
-  const isProfit = lastValue >= firstValue;
+  // The value also rises with new deposits, so when the period gain is known the color follows it instead.
+  const isProfit = isGain ?? lastValue >= firstValue;
   const color = isEmpty ? 'var(--profit)' : (isProfit ? 'var(--profit)' : 'var(--loss)');
 
   const { yDomain, span } = useMemo(() => {

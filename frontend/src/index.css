@@ -63,16 +63,18 @@ h1, h2, h3, h4 {
   flex-direction: column;
 }
 
+/* minmax(0, ...) lets the main column shrink below the holdings table's width; a plain 1fr grows to fit
+   the table and pushes the whole page sideways, instead of letting .table-container scroll on its own. */
 .dashboard-layout {
   display: grid;
-  grid-template-columns: 1fr 280px;
+  grid-template-columns: minmax(0, 1fr) 280px;
   gap: 1.5rem;
   align-items: start;
 }
 
 @media (max-width: 1024px) {
   .dashboard-layout {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
@@ -88,6 +90,10 @@ header {
   margin-bottom: 2rem;
   padding-bottom: 1.5rem;
   border-bottom: 1px solid var(--border);
+}
+
+.header-logo {
+  height: 45px;
 }
 
 .logo-text {
@@ -428,15 +434,28 @@ input:focus, select:focus, textarea:focus {
   line-height: 1.4;
   box-shadow: 0 4px 6px rgba(0,0,0,0.3);
   pointer-events: none;
-  opacity: 0;
-  transition: opacity 0.2s;
+  /* Hidden with display, not opacity: an invisible 250px tooltip still widens the page on phones. */
+  display: none;
   z-index: 10;
   font-weight: 400;
   letter-spacing: normal;
 }
 
 .tooltip-container:hover .tooltip-content {
-  opacity: 1;
+  display: block;
+  animation: tooltip-fade-in 0.2s ease;
+}
+
+@keyframes tooltip-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* The sidebar hugs the right edge, so its tooltips open toward the main column instead of off-screen. */
+.sidebar-column .tooltip-content {
+  left: auto !important;
+  right: 0;
+  transform: none !important;
 }
 
 /* Footer */
@@ -675,6 +694,24 @@ a.app-version:hover {
 @media (min-width: 1025px) {
   .mobile-only-filters {
     display: none !important;
+  }
+}
+
+/* Logo, currency toggle and account menu must fit side by side down to 360px phones. */
+@media (max-width: 480px) {
+  .header-logo {
+    height: 36px;
+  }
+
+  .account-menu-name {
+    display: none;
+  }
+
+  /* The inline styles open tooltips 250px to the right of the icon, past the screen edge on phones. */
+  .tooltip-content {
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    width: 240px !important;
   }
 }
 
