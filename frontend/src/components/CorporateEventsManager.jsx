@@ -11,7 +11,6 @@ export default function CorporateEventsManager() {
   // Form state
   const [showForm, setShowForm] = useState(false);
   const [formAssetId, setFormAssetId] = useState('');
-  const [formType, setFormType] = useState('split');
   const [formNewRatio, setFormNewRatio] = useState('');
   const [formDate, setFormDate] = useState('');
   const [formSubmitting, setFormSubmitting] = useState(false);
@@ -46,7 +45,7 @@ export default function CorporateEventsManager() {
       setEvents(eventsRes.data);
       const filteredAssets = assetsRes.data.filter(a => !['BTC', 'XRP', 'USDT', 'USD'].includes(a.ticker));
       setAssets(filteredAssets.sort((a, b) => a.ticker.localeCompare(b.ticker)));
-    } catch (err) {
+    } catch {
       setError("Error al cargar eventos corporativos.");
     } finally {
       setLoading(false);
@@ -67,7 +66,7 @@ export default function CorporateEventsManager() {
 
       const res = await api.post('/corporate-events/', {
         asset_id: formAssetId,
-        type: formType,
+        type: 'split',
         ratio: calculatedRatio,
         timestamp: timestamp
       });
@@ -112,7 +111,7 @@ export default function CorporateEventsManager() {
         </div>
 
         {showForm && (
-          <div className="modal-overlay" onMouseDown={(e) => { if (e.target.className === "modal-overlay") { (() => !formSubmitting && closeForm())(e); } }}>
+          <div className="modal-overlay" onMouseDown={(e) => { if (e.target === e.currentTarget && !formSubmitting) closeForm(); }}>
             <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '600px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', padding: '1.5rem', borderBottom: '1px solid var(--border)' }}>
                 <h2 style={{ margin: 0, paddingRight: '1rem', lineHeight: '1.2' }}>Registrar cambio de ratio</h2>
@@ -204,7 +203,7 @@ export default function CorporateEventsManager() {
                         <div 
                           onClick={() => {
                             if (dateInputRef.current && dateInputRef.current.showPicker) {
-                              try { dateInputRef.current.showPicker(); } catch (e) {}
+                              try { dateInputRef.current.showPicker(); } catch { /* showPicker throws outside a user gesture; native input still works */ }
                             }
                           }}
                           style={{

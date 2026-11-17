@@ -5,10 +5,13 @@ from app.database import get_db
 from app.schemas.asset import AssetHistoryResponse, AssetHistoryPoint, AssetWithPriceResponse
 from app.models.asset import Asset
 from app.models.asset_price import AssetPrice
+from app.api.dependencies import get_current_user
 
+# Listing assets triggers live price scraping, so it must not be callable anonymously.
 router = APIRouter(
     prefix="/assets",
-    tags=["assets"]
+    tags=["assets"],
+    dependencies=[Depends(get_current_user)]
 )
 
 @router.get("", response_model=List[AssetWithPriceResponse])

@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { Upload, FileSpreadsheet, AlertCircle, CheckCircle2, X } from 'lucide-react';
+import { Upload, FileSpreadsheet, AlertCircle, CheckCircle2 } from 'lucide-react';
 import api from '../api';
 
 const formatDate = (dateString) => {
@@ -198,7 +198,7 @@ export default function ImportTransactions({ onImportSuccess, onCancel, onDataCh
   const submitImport = async () => {
     setLoading(true);
     try {
-      const response = await api.post('/transactions/bulk', previewData);
+      await api.post('/transactions/bulk', previewData);
       setImportedCount(previewData.length);
       if (onDataChanged) onDataChanged();
     } catch (err) {

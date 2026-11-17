@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { UserX, UserCheck, Trash2, Shield, AlertTriangle, Loader2 } from 'lucide-react';
+import { Trash2, Shield, AlertTriangle, Loader2 } from 'lucide-react';
 import api from '../api';
 import CorporateEventsManager from './CorporateEventsManager';
 
@@ -22,7 +22,7 @@ export default function AdminDashboard({ user }) {
     try {
       const res = await api.get('/admin/users');
       setUsers(res.data);
-    } catch (err) {
+    } catch {
       setError("No se pudo cargar la lista de usuarios. ¿Tienes permisos?");
     } finally {
       setLoading(false);
@@ -201,7 +201,7 @@ export default function AdminDashboard({ user }) {
 
       {/* Toggle Status Modal */}
       {confirmToggle && (
-        <div className="modal-overlay" onMouseDown={(e) => { if (e.target.className === "modal-overlay") { (() => !actionLoading && setConfirmToggle(null))(e); } }}>
+        <div className="modal-overlay" onMouseDown={(e) => { if (e.target === e.currentTarget && !actionLoading) setConfirmToggle(null); }}>
           <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '400px', padding: '1.5rem' }}>
             <h2 style={{ marginTop: 0 }}>Confirmar Acción</h2>
             <p>¿Estás seguro que deseas <strong>{confirmToggle.is_active ? 'desactivar' : 'activar'}</strong> la cuenta de <strong>{confirmToggle.email}</strong>?</p>
@@ -220,7 +220,7 @@ export default function AdminDashboard({ user }) {
 
       {/* Delete Request Modal */}
       {confirmDelete && (
-        <div className="modal-overlay" onMouseDown={(e) => { if (e.target.className === "modal-overlay") { (() => !actionLoading && setConfirmDelete(null))(e); } }}>
+        <div className="modal-overlay" onMouseDown={(e) => { if (e.target === e.currentTarget && !actionLoading) setConfirmDelete(null); }}>
           <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '450px', padding: '1.5rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: 'var(--loss)', marginBottom: '15px' }}>
               <AlertTriangle size={24} />

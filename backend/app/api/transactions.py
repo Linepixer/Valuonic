@@ -1,5 +1,5 @@
-from fastapi import APIRouter, Depends, HTTPException, status
-from typing import List
+from fastapi import APIRouter, Body, Depends, HTTPException, Request, status
+from typing import Annotated, List
 from sqlalchemy.orm import Session
 from uuid import UUID
 
@@ -9,11 +9,34 @@ from app.models.user import User
 from app.models.asset import Asset
 from app.models.transaction import Transaction
 from app.schemas.transaction import TransactionCreate, TransactionResponse
+from app.core.asset_catalog import SUPPORTED_ASSETS, normalize_ticker
+from app.core.rate_limit import limiter
 
 router = APIRouter(
     prefix="/transactions",
     tags=["transactions"]
 )
+
+MAX_BULK_TRANSACTIONS = 5000
+
+def _reject_unsupported(tickers: set[str]) -> None:
+    unsupported = sorted(tickers - SUPPORTED_ASSETS.keys())
+    if unsupported:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Activo no soportado: {', '.join(unsupported)}"
+        )
+
+def _get_or_create_asset(db: Session, ticker: str) -> Asset:
+    asset = db.query(Asset).filter(Asset.ticker == ticker).first()
+    if asset:
+        return asset
+    spec = SUPPORTED_ASSETS[ticker]
+    asset = Asset(ticker=ticker, name=spec["name"], type=spec["type"], currency="USD")
+    db.add(asset)
+    db.commit()
+    db.refresh(asset)
+    return asset
 
 @router.post("/", response_model=TransactionResponse, status_code=status.HTTP_201_CREATED)
 def create_transaction(
@@ -21,17 +44,9 @@ def create_transaction(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    asset = db.query(Asset).filter(Asset.ticker == tx_in.ticker.upper()).first()
-    if not asset:
-        asset = Asset(
-            ticker=tx_in.ticker.upper(),
-            name=tx_in.ticker.upper(),
-            type=tx_in.asset_type,
-            currency="USD"
-        )
-        db.add(asset)
-        db.commit()
-        db.refresh(asset)
+    ticker = normalize_ticker(tx_in.ticker)
+    _reject_unsupported({ticker})
+    asset = _get_or_create_asset(db, ticker)
 
     db_tx = Transaction(
         user_id=current_user.id,
@@ -53,38 +68,32 @@ def create_transaction(
     db.refresh(db_tx)
     
     # Attach fields required by the TransactionResponse schema
-    setattr(db_tx, "ticker", tx_in.ticker)
-    setattr(db_tx, "asset_type", tx_in.asset_type)
+    setattr(db_tx, "ticker", asset.ticker)
+    setattr(db_tx, "asset_type", asset.type)
     
     return db_tx
 
 @router.post("/bulk", status_code=status.HTTP_201_CREATED)
+@limiter.limit("10/minute")
 def create_bulk_transactions(
-    txs_in: List[TransactionCreate],
+    request: Request,
+    txs_in: Annotated[List[TransactionCreate], Body(max_length=MAX_BULK_TRANSACTIONS)],
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
     from app.models.exchange_rate import ExchangeRateHistory
     from sqlalchemy import desc
 
+    # Validate the whole file first so a bad row can't leave a half-imported history behind.
+    _reject_unsupported({normalize_ticker(tx.ticker) for tx in txs_in})
+
     assets_cache = {}
     created_count = 0
     
     for tx_in in txs_in:
-        ticker = tx_in.ticker.upper()
+        ticker = normalize_ticker(tx_in.ticker)
         if ticker not in assets_cache:
-            asset = db.query(Asset).filter(Asset.ticker == ticker).first()
-            if not asset:
-                asset = Asset(
-                    ticker=ticker,
-                    name=ticker,
-                    type=tx_in.asset_type,
-                    currency="USD"
-                )
-                db.add(asset)
-                db.commit()
-                db.refresh(asset)
-            assets_cache[ticker] = asset.id
+            assets_cache[ticker] = _get_or_create_asset(db, ticker).id
             
         asset_id = assets_cache[ticker]
         

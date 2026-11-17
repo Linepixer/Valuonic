@@ -12,6 +12,7 @@ from app.api.dependencies import get_current_superadmin
 from app.core import security
 from app.config import settings
 from app.utils.email import send_admin_account_deletion_email
+from app.services import session_service
 from pydantic import BaseModel
 
 router = APIRouter(
@@ -42,6 +43,9 @@ def toggle_user_status(
         
     user.is_active = not user.is_active
     db.commit()
+
+    if not user.is_active:
+        session_service.revoke_all_sessions(db, user.id)
     
     return {"message": f"Usuario {'activado' if user.is_active else 'desactivado'} con éxito", "is_active": user.is_active}
 
@@ -59,7 +63,7 @@ def request_user_deletion(
         raise HTTPException(status_code=400, detail="No puedes eliminar tu propia cuenta desde aquí")
 
     # Generate token valid for 10 minutes
-    token = security.create_access_token(
+    token = security.create_token(
         data={
             "sub": str(current_admin.id),
             "type": "admin_account_deletion",

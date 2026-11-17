@@ -3,31 +3,21 @@ from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.services import user_service
+from app.services import user_service, session_service
 from app.core import security
 from app.core.rate_limit import limiter
 from app.config import settings
 from app.utils.email import send_verification_email, send_password_reset_email
 from app.models.user import User
+from pydantic import BaseModel
+from uuid import UUID
 import jwt
+import requests
 from datetime import timedelta
 
 router = APIRouter(
     tags=["authentication"]
 )
-
-def set_auth_cookie(response: Response, token: str):
-    # samesite='lax' allows cross-site top level navigations but prevents CSRF
-    # secure=True should be used in production, but for local dev we can omit it if not on HTTPS
-    is_prod = getattr(settings, 'ENVIRONMENT', 'dev') == 'production'
-    response.set_cookie(
-        key="access_token",
-        value=token,
-        httponly=True,
-        secure=is_prod,
-        samesite="lax",
-        max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60
-    )
 
 @router.post("/login")
 @limiter.limit("20/minute")
@@ -60,25 +50,23 @@ def login(
             detail="not_verified"
         )
     
-    access_token = security.create_access_token(
-        data={"sub": str(user.id)}
-    )
-    
-    set_auth_cookie(response, access_token)
-    
+    access_token = session_service.start_session(db, response, user.id)
+
     return {"access_token": access_token, "token_type": "bearer"}
 
 @router.post("/logout")
-def logout(response: Response):
-    response.delete_cookie(
-        key="access_token",
-        httponly=True,
-        samesite="lax",
-        secure=getattr(settings, 'ENVIRONMENT', 'dev') == 'production'
-    )
+def logout(request: Request, response: Response, db: Session = Depends(get_db)):
+    token = request.cookies.get(session_service.AUTH_COOKIE_NAME)
+    if token:
+        try:
+            payload = security.decode_token(token)
+            if payload.get("type") == security.SESSION_TOKEN_TYPE:
+                session_service.revoke_session(db, UUID(payload["sid"]))
+        except (jwt.PyJWTError, KeyError, ValueError, TypeError):
+            pass
+    session_service.clear_auth_cookie(response)
     return {"message": "Logged out successfully"}
 
-from pydantic import BaseModel
 class ResendVerificationRequest(BaseModel):
     email: str
 
@@ -93,7 +81,7 @@ def resend_verification(request: Request, body: ResendVerificationRequest, db: S
     if user.is_verified:
         return {"message": "Esta cuenta ya está verificada."}
         
-    token = security.create_access_token(data={"sub": str(user.id), "type": "email_verification"})
+    token = security.create_email_verification_token(user.id)
     send_verification_email(user.email, token)
     return {"message": "Correo enviado con éxito."}
 
@@ -105,7 +93,7 @@ def verify_email(request: Request, token: str, response: Response, db: Session =
         user_id: str = payload.get("sub")
         token_type: str = payload.get("type")
         
-        if user_id is None or token_type != "email_verification":
+        if user_id is None or token_type != security.EMAIL_VERIFICATION_TOKEN_TYPE:
             raise HTTPException(status_code=400, detail="Token inválido")
             
         user = db.query(User).filter(User.id == user_id).first()
@@ -113,16 +101,13 @@ def verify_email(request: Request, token: str, response: Response, db: Session =
             raise HTTPException(status_code=404, detail="Usuario no encontrado")
             
         if user.is_verified:
-            access_token = security.create_access_token(data={"sub": str(user.id)})
-            set_auth_cookie(response, access_token)
-            return {"message": "Cuenta ya verificada", "access_token": access_token, "token_type": "bearer"}
+            return {"message": "Cuenta ya verificada"}
             
         user.is_verified = True
         db.commit()
         
         # Automatically log the user in so they don't have to type their credentials again
-        access_token = security.create_access_token(data={"sub": str(user.id)})
-        set_auth_cookie(response, access_token)
+        access_token = session_service.start_session(db, response, user.id)
         return {"message": "Cuenta verificada con éxito", "access_token": access_token, "token_type": "bearer"}
         
     except jwt.ExpiredSignatureError:
@@ -142,7 +127,7 @@ def forgot_password(request: Request, body: ForgotPasswordRequest, db: Session =
         return {"message": "Si la cuenta existe, se ha enviado un correo con instrucciones."}
     
     # Tie the reset token to the current password hash so it invalidates immediately after a successful reset
-    token = security.create_access_token(
+    token = security.create_token(
         data={
             "sub": str(user.id), 
             "type": "password_reset",
@@ -207,10 +192,12 @@ def reset_password(request: Request, body: ResetPasswordRequest, response: Respo
             
         user.hashed_password = user_service.get_password_hash(body.new_password)
         db.commit()
-        
+
+        # A reset usually means the old password may be compromised: sign out every device.
+        session_service.revoke_all_sessions(db, user.id)
+
         # Drop them straight into their dashboard
-        access_token = security.create_access_token(data={"sub": str(user.id)})
-        set_auth_cookie(response, access_token)
+        access_token = session_service.start_session(db, response, user.id)
         return {"message": "Contraseña actualizada con éxito", "access_token": access_token, "token_type": "bearer"}
         
     except jwt.ExpiredSignatureError:
@@ -218,70 +205,101 @@ def reset_password(request: Request, body: ResetPasswordRequest, response: Respo
     except jwt.PyJWTError:
         raise HTTPException(status_code=400, detail="Token inválido")
 
-from pydantic import BaseModel
-from google.oauth2 import id_token
-from google.auth.transport import requests as google_requests
+GOOGLE_TOKENINFO_URL = "https://oauth2.googleapis.com/tokeninfo"
+GOOGLE_USERINFO_URL = "https://www.googleapis.com/oauth2/v3/userinfo"
+GOOGLE_TIMEOUT_SECONDS = 5
 
 class GoogleToken(BaseModel):
     token: str
 
+def _invalid_google_token() -> HTTPException:
+    return HTTPException(status_code=401, detail="Token de Google inválido")
+
+def _fetch_google_profile(access_token: str) -> dict:
+    # Name and picture are cosmetic, so a userinfo failure must not block the login.
+    try:
+        resp = requests.get(
+            GOOGLE_USERINFO_URL,
+            headers={"Authorization": f"Bearer {access_token}"},
+            timeout=GOOGLE_TIMEOUT_SECONDS,
+        )
+        return resp.json() if resp.status_code == 200 else {}
+    except (requests.RequestException, ValueError):
+        return {}
+
 @router.post("/google")
+@limiter.limit("20/minute")
 def google_auth(
+    request: Request,
     token_data: GoogleToken,
     response: Response,
     db: Session = Depends(get_db)
 ):
-    try:
-        import requests
-        # Get user info using access token
-        resp = requests.get(
-            "https://www.googleapis.com/oauth2/v3/userinfo",
-            headers={"Authorization": f"Bearer {token_data.token}"}
-        )
-        if resp.status_code != 200:
-            raise ValueError("Token de Google inválido")
-            
-        idinfo = resp.json()
+    if not settings.GOOGLE_CLIENT_ID:
+        raise HTTPException(status_code=503, detail="El inicio de sesión con Google no está disponible")
 
-        email = idinfo.get("email")
-        if not email:
-            raise HTTPException(status_code=400, detail="El token no contiene un email.")
-            
-        user = db.query(User).filter(User.email == email).first()
-        
-        if user:
-            # User exists, optionally link google_id if not already linked
-            if not user.google_id:
-                user.google_id = idinfo.get("sub")
-                user.auth_provider = "google"
-                user.is_verified = True
-                if not user.picture and idinfo.get("picture"):
-                    user.picture = idinfo.get("picture")
-                db.commit()
-                db.refresh(user)
-        else:
-            # Create new user
-            user = User(
-                email=email,
-                name=idinfo.get("name"),
-                hashed_password=None,
-                is_verified=True,
-                auth_provider="google",
-                google_id=idinfo.get("sub"),
-                picture=idinfo.get("picture")
+    try:
+        info_resp = requests.get(
+            GOOGLE_TOKENINFO_URL,
+            params={"access_token": token_data.token},
+            timeout=GOOGLE_TIMEOUT_SECONDS,
+        )
+        token_info = info_resp.json() if info_resp.status_code == 200 else None
+    except (requests.RequestException, ValueError):
+        raise HTTPException(status_code=503, detail="No se pudo validar el token con Google")
+
+    if not token_info:
+        raise _invalid_google_token()
+
+    # Any Google app can mint access tokens for its users; accepting one issued to another
+    # client would let that app sign in to Valuonic as those users.
+    if token_info.get("aud") != settings.GOOGLE_CLIENT_ID:
+        raise _invalid_google_token()
+
+    email = token_info.get("email")
+    google_id = token_info.get("sub")
+    if not email or not google_id or str(token_info.get("email_verified")).lower() != "true":
+        raise _invalid_google_token()
+
+    user = db.query(User).filter(User.email == email).first()
+
+    if user:
+        if not user.is_active:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Account is disabled. Please contact support."
             )
-            db.add(user)
+
+        if user.google_id and user.google_id != google_id:
+            raise _invalid_google_token()
+
+        if not user.google_id:
+            if not user.is_verified:
+                # Nobody proved ownership of this email at signup, so a password set back then may
+                # belong to someone else (pre-account hijacking). Google now proves ownership: drop it.
+                user.hashed_password = None
+            user.google_id = google_id
+            user.auth_provider = "google"
+            user.is_verified = True
+            if not user.picture:
+                user.picture = _fetch_google_profile(token_data.token).get("picture")
             db.commit()
             db.refresh(user)
-
-        # Generate Valuonic JWT
-        access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
-        access_token = security.create_access_token(
-            data={"sub": str(user.id)}, expires_delta=access_token_expires
+    else:
+        profile = _fetch_google_profile(token_data.token)
+        user = User(
+            email=email,
+            name=profile.get("name"),
+            hashed_password=None,
+            is_verified=True,
+            auth_provider="google",
+            google_id=google_id,
+            picture=profile.get("picture")
         )
-        set_auth_cookie(response, access_token)
+        db.add(user)
+        db.commit()
+        db.refresh(user)
 
-        return {"access_token": access_token, "token_type": "bearer", "user_id": str(user.id)}
-        
-    except ValueError:
-        raise HTTPException(status_code=401, detail="Token de Google inválido")
+    access_token = session_service.start_session(db, response, user.id)
+
+    return {"access_token": access_token, "token_type": "bearer", "user_id": str(user.id)}

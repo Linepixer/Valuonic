@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.schemas.user import UserCreate, UserResponse, ChangePasswordRequest
-from app.services import user_service
+from app.services import user_service, session_service
 from app.models.user import User
 from app.models.transaction import Transaction
 from app.api.dependencies import get_current_user
@@ -32,7 +32,7 @@ def create_user(request: Request, user: UserCreate, db: Session = Depends(get_db
     new_user = user_service.create_user(db=db, user=user)
     
     # Generar token y enviar email
-    token = security.create_access_token(data={"sub": str(new_user.id), "type": "email_verification"})
+    token = security.create_email_verification_token(new_user.id)
     send_verification_email(new_user.email, token)
     
     return new_user
@@ -42,25 +42,30 @@ def get_me(current_user: User = Depends(get_current_user)):
     return current_user
 
 @router.post("/change-password")
+@limiter.limit("5/minute")
 def change_password(
-    request: ChangePasswordRequest, 
+    request: Request,
+    body: ChangePasswordRequest,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    success = user_service.change_user_password(db, current_user, request.current_password, request.new_password)
+    success = user_service.change_user_password(db, current_user, body.current_password, body.new_password)
     if not success:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="La contraseña actual es incorrecta")
+
+    session_service.revoke_all_sessions(db, current_user.id, except_session_id=request.state.session_id)
     
     return {"message": "Contraseña actualizada correctamente"}
 
 @router.post("/me/request-delete")
-def request_delete_account(current_user: User = Depends(get_current_user)):
+@limiter.limit("3/minute")
+def request_delete_account(request: Request, current_user: User = Depends(get_current_user)):
     if current_user.is_admin:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Las cuentas de superusuario no pueden eliminarse"
         )
-    token = security.create_access_token(data={"sub": str(current_user.id), "type": "account_deletion"})
+    token = security.create_account_deletion_token(current_user.id)
     send_account_deletion_email(current_user.email, token)
     return {"message": "Email de confirmación enviado"}
 
@@ -70,8 +75,8 @@ def delete_account(
     db: Session = Depends(get_db)
 ):
     try:
-        payload = security.decode_access_token(token)
-        if payload.get("type") != "account_deletion":
+        payload = security.decode_token(token)
+        if payload.get("type") != security.ACCOUNT_DELETION_TOKEN_TYPE:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Tipo de token inválido")
         user_id_str = payload.get("sub")
         if not user_id_str:

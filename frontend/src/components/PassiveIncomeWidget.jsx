@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { DollarSign, Calendar, HelpCircle } from 'lucide-react';
 import api from '../api';
 
@@ -7,11 +7,7 @@ export default function PassiveIncomeWidget({ currency }) {
   const [data, setData] = useState([]);
   const [totalHistorical, setTotalHistorical] = useState(0);
 
-  useEffect(() => {
-    fetchData();
-  }, [currency]);
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     try {
       const res = await api.get('/transactions/');
@@ -61,7 +57,11 @@ export default function PassiveIncomeWidget({ currency }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [currency]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   const formatCurrency = (value) => {
     return new Intl.NumberFormat('es-AR', {

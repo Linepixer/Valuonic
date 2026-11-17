@@ -18,6 +18,13 @@ FROM nginx:alpine
 RUN rm -rf /usr/share/nginx/html/*
 COPY --from=builder /app/dist /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY security-headers.conf /etc/nginx/security-headers.conf
+
+# CSP connect-src needs the API origin; in prod it is same-origin, locally it is a different port.
+ARG VITE_API_URL
+RUN api_origin=$(printf '%s' "$VITE_API_URL" | sed -nE 's#^(https?://[^/]+).*#\1#p') \
+    && sed -i "s#__API_ORIGIN__#${api_origin}#" /etc/nginx/security-headers.conf \
+    && nginx -t
 
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]

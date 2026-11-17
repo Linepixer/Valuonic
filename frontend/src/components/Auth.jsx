@@ -4,7 +4,7 @@ import { useGoogleLogin } from '@react-oauth/google';
 import api from '../api';
 import es from '../locales/es.json';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
-import { useToast } from '../context/ToastContext';
+import { useToast } from '../context/useToast';
 import './Auth.css';
 
 export default function Auth({ onLogin }) {
@@ -40,13 +40,13 @@ export default function Auth({ onLogin }) {
   const days = Array.from({ length: 31 }, (_, i) => i + 1);
 
   useEffect(() => {
-    document.title = isLogin ? 'Iniciar sesión | Valuonic' : 'Registrarse | Valuonic';
-    if (location.pathname !== '/login' && location.pathname !== '/signup') {
+    const isSignup = location.pathname === '/signup';
+    if (location.pathname !== '/login' && !isSignup) {
       const search = location.search;
       navigate('/login' + search, { replace: true });
       setIsLogin(true);
     } else {
-      setIsLogin(location.pathname !== '/signup');
+      setIsLogin(!isSignup);
     }
   }, [location.pathname, location.search, navigate]);
 
@@ -71,7 +71,7 @@ export default function Auth({ onLogin }) {
         showToast('¡Bienvenido a Valuonic!', 'success');
         onLogin();
         navigate('/');
-      } catch (err) {
+      } catch {
         showToast('Error al iniciar sesión con Google', 'error');
       } finally {
         setIsLoading(false);
@@ -132,7 +132,7 @@ export default function Auth({ onLogin }) {
         formData.append('username', email);
         formData.append('password', password);
 
-        const res = await api.post('/login', formData, {
+        await api.post('/login', formData, {
           headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
         });
 
@@ -171,7 +171,7 @@ export default function Auth({ onLogin }) {
       await api.post('/resend-verification', { email });
       showToast(t.emailSent, 'success');
       setNeedsVerification(false);
-    } catch (err) {
+    } catch {
       showToast(t.defaultError, 'error');
     } finally {
       setIsResending(false);

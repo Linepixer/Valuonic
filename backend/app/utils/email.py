@@ -91,7 +91,7 @@ def send_verification_email(to_email: str, token: str) -> None:
             </div>
             <h2>Confirma tu dirección de email</h2>
             <p>
-                Gracias por registrarte en Valuonic. Para empezar a hacer un seguimiento de tus inversiones y acceder a tu dashboard, necesitamos que valides tu cuenta.
+                Gracias por registrarte en Valuonic. Para empezar a hacer un seguimiento de tus inversiones y acceder a tu dashboard, necesitamos que valides tu cuenta. El enlace es válido por 48 horas.
             </p>
             <a href="{verification_link}" class="button">Verificar mi cuenta</a>
             

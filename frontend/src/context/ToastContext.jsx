@@ -1,15 +1,6 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import { useState, useCallback } from 'react';
+import { ToastContext } from './useToast';
 import './Toast.css';
-
-const ToastContext = createContext(null);
-
-export const useToast = () => {
-  const context = useContext(ToastContext);
-  if (!context) {
-    throw new Error('useToast must be used within a ToastProvider');
-  }
-  return context;
-};
 
 const CheckIcon = () => (
   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">

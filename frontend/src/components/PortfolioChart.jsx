@@ -6,14 +6,14 @@ export default function PortfolioChart({ data, isArs }) {
 
   const isEmpty = !data || data.length === 0;
 
-  const chartData = isEmpty ? [
+  const chartData = useMemo(() => isEmpty ? [
     { date: '2024-01-01', total_value_usd: 0, total_value_ars: 0 },
     { date: '2024-02-01', total_value_usd: 0, total_value_ars: 0 },
     { date: '2024-03-01', total_value_usd: 0, total_value_ars: 0 },
     { date: '2024-04-01', total_value_usd: 0, total_value_ars: 0 },
     { date: '2024-05-01', total_value_usd: 0, total_value_ars: 0 },
     { date: '2024-06-01', total_value_usd: 0, total_value_ars: 0 }
-  ] : data;
+  ] : data, [data, isEmpty]);
 
   const filteredData = useMemo(() => {
     if (timeRange === 'MAX') return chartData;

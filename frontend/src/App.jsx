@@ -15,6 +15,7 @@ import About from './components/About'
 import Terms from './components/Terms'
 import Privacy from './components/Privacy'
 import api from './api'
+import { getPageTitle } from './pageTitles'
 import './index.css'
 
 function App() {
@@ -29,6 +30,10 @@ function App() {
   const currentPath = location.pathname
 
   useEffect(() => {
+    document.title = getPageTitle(currentPath)
+  }, [currentPath])
+
+  useEffect(() => {
     // Grab the email verification token from the URL if it's there
     const params = new URLSearchParams(location.search)
     const tokenParams = params.get('token')
@@ -41,7 +46,9 @@ function App() {
       // Otherwise, just check if we have a valid session cookie
       checkSession()
     }
-  }, []) // Empty dependency array is intentional for initial load
+  // Runs once on mount: the token/session check must not re-fire on every navigation.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const checkSession = async () => {
     try {
@@ -51,19 +58,10 @@ function App() {
       if (currentPath === '/login' || currentPath === '/signup') {
         navigate('/portfolio', { replace: true })
       }
-    } catch (err) {
+    } catch {
       setIsAuthenticated(false)
     } finally {
       setIsInitializing(false)
-    }
-  }
-
-  const fetchUser = async () => {
-    try {
-      const res = await api.get('/users/me')
-      setUser(res.data)
-    } catch (err) {
-      console.error("Error fetching user profile", err)
     }
   }
 
@@ -73,7 +71,7 @@ function App() {
       setVerificationMessage('¡Cuenta verificada exitosamente!')
       // verify endpoint sets the cookie for us, so we can checkSession
       checkSession()
-    } catch (err) {
+    } catch {
       setVerificationMessage('El link de verificación es inválido o expiró.')
       setIsInitializing(false)
     }

@@ -11,19 +11,26 @@ env:
   IMAGE_NAME_API: linepixer/valuonic-api
   IMAGE_NAME_WEB: linepixer/valuonic-web
 
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
+    # Watchtower ships whatever lands on :latest, so the push itself is the deploy.
+    # Required reviewers on this environment turn every merge into an explicit approval.
+    environment: production
     permissions:
       contents: read
       packages: write
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
       - name: Log in to the Container registry
-        uses: docker/login-action@v3
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3.7.0
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
@@ -31,14 +38,15 @@ jobs:
 
       - name: Extract metadata (tags, labels) for API
         id: meta-api
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@c299e40c65443455700f0fdfc63efafe5b349051 # v5.10.0
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_API }}
           tags: |
             type=raw,value=latest
+            type=sha,format=long
 
       - name: Build and push API Docker image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@ca052bb54ab0790a636c9b5f226502c73d547a25 # v5.4.0
         with:
           context: ./backend
           push: true
@@ -47,14 +55,15 @@ jobs:
 
       - name: Extract metadata (tags, labels) for Web
         id: meta-web
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@c299e40c65443455700f0fdfc63efafe5b349051 # v5.10.0
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_WEB }}
           tags: |
             type=raw,value=latest
+            type=sha,format=long
 
       - name: Build and push Web Docker image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@ca052bb54ab0790a636c9b5f226502c73d547a25 # v5.4.0
         with:
           context: ./frontend
           push: true

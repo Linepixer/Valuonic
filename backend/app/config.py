@@ -12,11 +12,15 @@ class Settings:
     
     SECRET_KEY: str = os.getenv("SECRET_KEY")
     ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 365 * 100  # Effectively an infinite session
-    
+
     ENV: str = os.getenv("ENV", "development")
-    
+
     GOOGLE_CLIENT_ID: str = os.getenv("GOOGLE_CLIENT_ID", "")
+
+    FRONTEND_URL: str = os.getenv("FRONTEND_URL", "")
+
+    # Fail secure: only an explicit plain-HTTP local frontend may receive the session cookie without the Secure flag.
+    COOKIE_SECURE: bool = not FRONTEND_URL.startswith(("http://localhost", "http://127.0.0.1"))
     
     @property
     def ADMIN_EMAILS(self) -> list[str]:

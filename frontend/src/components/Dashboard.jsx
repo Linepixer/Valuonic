@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ArrowUpRight, ArrowDownRight, RefreshCw, AlertTriangle, Plus, X, Bitcoin, DollarSign, LineChart as LineChartIcon, Coins, Landmark, Upload, Download, HelpCircle } from 'lucide-react';
+import { ArrowUpRight, ArrowDownRight, RefreshCw, AlertTriangle, Plus, X, Upload, Download, HelpCircle } from 'lucide-react';
 import { AreaChart, Area, YAxis } from 'recharts';
 import api from '../api';
 import TransactionForm from './TransactionForm';
@@ -85,7 +85,7 @@ const CUSTOM_ASSET_NAMES = {
   'XRP': 'Ripple'
 };
 
-const getAssetIcon = (ticker, type) => {
+const getAssetIcon = (ticker) => {
   const cryptoUrl = {
     'BTC': 'https://cryptologos.cc/logos/bitcoin-btc-logo.svg?v=032',
     'USDT': 'https://cryptologos.cc/logos/tether-usdt-logo.svg?v=032',
@@ -350,7 +350,6 @@ export default function Dashboard({ currency }) {
 
   const isArs = currency === 'ARS';
   const totalValue = isArs ? portfolio.total_value_ars : portfolio.total_value_usd;
-  const xirr = isArs ? (portfolio.xirr_ars || 0) : (portfolio.xirr_usd || 0);
 
   const totalProfit = portfolio.assets.reduce((acc, asset) => acc + (isArs ? asset.potential_profit_ars : asset.potential_profit_usd), 0);
   const totalAvgCost = portfolio.assets.reduce((acc, asset) => acc + ((isArs ? asset.average_purchase_price_ars : asset.average_purchase_price_usd) * asset.quantity), 0);
@@ -530,7 +529,6 @@ export default function Dashboard({ currency }) {
                         const value = isArs ? asset.total_value_ars : asset.total_value_usd;
                         const profit = isArs ? asset.potential_profit_ars : asset.potential_profit_usd;
                         const profitPct = isArs ? asset.profit_percentage_ars : asset.profit_percentage_usd;
-                        const isCrypto = ['BTC', 'XRP'].includes(asset.ticker);
 
                         return (
                           <tr
@@ -677,7 +675,7 @@ export default function Dashboard({ currency }) {
                             width: '38px', height: '38px', borderRadius: '50%', background: 'var(--bg-hover)',
                             display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0
                           }}>
-                            {getAssetIcon(asset.ticker, getAssetType(asset.ticker))}
+                            {getAssetIcon(asset.ticker)}
                           </div>
                           <div>
                             <div className="font-semibold">{asset.ticker}</div>
@@ -738,7 +736,7 @@ export default function Dashboard({ currency }) {
                         width: '36px', height: '36px', borderRadius: '50%', background: 'var(--bg-hover)',
                         display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0
                       }}>
-                        {getAssetIcon(asset.ticker, getAssetType(asset.ticker))}
+                        {getAssetIcon(asset.ticker)}
                       </div>
                       <div style={{ display: 'flex', flexDirection: 'column' }}>
                         <span className="font-semibold" style={{ fontSize: '1.2rem', color: 'var(--text-main)' }}>{asset.ticker}</span>
@@ -795,7 +793,7 @@ export default function Dashboard({ currency }) {
         isImporting ? (
           <ImportTransactions
             onCancel={() => navigateTo('transactions', null, false)}
-            onImportSuccess={(count) => {
+            onImportSuccess={() => {
               navigateTo('transactions', null, false);
             }}
             onDataChanged={() => {
@@ -830,7 +828,7 @@ export default function Dashboard({ currency }) {
       )}
 
       {isModalOpen && (
-        <div className="modal-overlay" onMouseDown={(e) => { if (e.target.className === 'modal-overlay') setIsModalOpen(false); }}>
+        <div className="modal-overlay" onMouseDown={(e) => { if (e.target === e.currentTarget) setIsModalOpen(false); }}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.5rem', borderBottom: '1px solid var(--border)' }}>
               <h2 style={{ margin: 0 }}>Nueva transacción</h2>

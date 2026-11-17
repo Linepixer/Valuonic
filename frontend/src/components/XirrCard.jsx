@@ -1,4 +1,4 @@
-import { TrendingUp, TrendingDown, HelpCircle } from 'lucide-react';
+import { HelpCircle } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
 export default function XirrCard({ portfolio, isArs }) {

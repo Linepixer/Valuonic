@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { RefreshCw, AlertTriangle, Trash2, X, Search, ArrowDown, ArrowUp, ArrowUpDown, Filter } from 'lucide-react';
+import { RefreshCw, AlertTriangle, Trash2, X, ArrowDown, ArrowUp, ArrowUpDown, Filter } from 'lucide-react';
 import api from '../api';
 
 const formatCurrency = (value, currency) => {
@@ -188,7 +188,7 @@ export default function TransactionsList({ currency, onTransactionDeleted, refre
 
   const formatShortDate = (dateString) => {
     if (!dateString) return '';
-    const [year, month, day] = dateString.split('-');
+    const [, month, day] = dateString.split('-');
     const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
     return `${day} ${months[parseInt(month, 10) - 1]}`;
   };
@@ -427,7 +427,6 @@ export default function TransactionsList({ currency, onTransactionDeleted, refre
               </tr>
             ) : (
               filteredTransactions.map(tx => {
-                const isCrypto = ['Crypto', 'Criptomoneda'].includes(tx.asset_type) || ['BTC', 'XRP', 'USDT'].includes(tx.ticker);
                 const isCashInterest = tx.type.toLowerCase() === 'intereses' && Number(tx.quantity) === 0;
                 let total = Number(tx.total_value) || 0;
                 if (isCashInterest && total === 0 && Number(tx.price_per_unit) > 0) {
@@ -495,7 +494,6 @@ export default function TransactionsList({ currency, onTransactionDeleted, refre
           </div>
         ) : (
           filteredTransactions.map(tx => {
-            const isCrypto = ['Crypto', 'Criptomoneda'].includes(tx.asset_type) || ['BTC', 'XRP', 'USDT'].includes(tx.ticker);
             const isCashInterest = tx.type.toLowerCase() === 'intereses' && Number(tx.quantity) === 0;
             let total = Number(tx.total_value) || 0;
             if (isCashInterest && total === 0 && Number(tx.price_per_unit) > 0) {
@@ -573,7 +571,7 @@ export default function TransactionsList({ currency, onTransactionDeleted, refre
       </div>
 
       {deletingId && (
-        <div className="modal-overlay" onMouseDown={(e) => { if (e.target.className === "modal-overlay") { (() => setDeletingId(null))(e); } }}>
+        <div className="modal-overlay" onMouseDown={(e) => { if (e.target === e.currentTarget) setDeletingId(null); }}>
           <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '400px' }}>
             <div style={{ padding: '1.5rem', textAlign: 'center' }}>
               <AlertTriangle size={48} color="var(--loss)" style={{ marginBottom: '1rem' }} />

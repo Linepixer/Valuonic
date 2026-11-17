@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { TrendingUp, Calendar, ArrowRight, HelpCircle } from 'lucide-react';
 import api from '../api';
@@ -9,11 +9,7 @@ export default function MonthlyInvestmentWidget({ currency }) {
   const [average, setAverage] = useState(0);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  useEffect(() => {
-    fetchData();
-  }, [currency]);
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     try {
       const res = await api.get('/transactions/');
@@ -67,7 +63,11 @@ export default function MonthlyInvestmentWidget({ currency }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [currency]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   const formatCurrency = (val) => {
     return new Intl.NumberFormat('es-AR', {
@@ -167,7 +167,7 @@ export default function MonthlyInvestmentWidget({ currency }) {
       </div>
 
       {isModalOpen && !isEmpty && createPortal(
-        <div className="modal-overlay" onMouseDown={(e) => { if (e.target.className === 'modal-overlay') setIsModalOpen(false); }}>
+        <div className="modal-overlay" onMouseDown={(e) => { if (e.target === e.currentTarget) setIsModalOpen(false); }}>
           <div className="modal-content" style={{ maxWidth: '600px', padding: '1.5rem', borderRadius: '12px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
               <h2 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '1.4rem' }}>

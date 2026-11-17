@@ -8,11 +8,6 @@ export default function About() {
 
   useEffect(() => {
     window.scrollTo(0, 0);
-    const prevTitle = document.title;
-    document.title = 'Acerca de — Valuonic';
-    return () => {
-      document.title = prevTitle;
-    };
   }, []);
 
   return (
