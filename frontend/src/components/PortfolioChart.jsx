@@ -1,6 +1,15 @@
 import { useState, useMemo } from 'react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
+// Built from the parts so "2026-10-17" stays that calendar day; new Date(iso) would read it as UTC midnight.
+const toLocalDate = (iso) => {
+  const [year, month, day] = iso.split('-').map(Number);
+  return new Date(year, month - 1, day);
+};
+const formatDayMonth = (iso) => toLocalDate(iso).toLocaleDateString('es-AR', { day: 'numeric', month: 'short' });
+const formatMonthYear = (iso) => toLocalDate(iso).toLocaleDateString('es-AR', { month: 'short', year: 'numeric' });
+const formatFullDate = (iso) => `${formatDayMonth(iso)} ${toLocalDate(iso).getFullYear()}`;
+
 export default function PortfolioChart({ data, isArs, range, onRangeChange, startDate, isGain }) {
   const [internalRange, setInternalRange] = useState('MAX');
   // The portfolio screen owns the period because it also drives the header and the table; other views keep their own.
@@ -129,6 +138,7 @@ export default function PortfolioChart({ data, isArs, range, onRangeChange, star
             tick={{ fill: 'var(--text-muted)', fontSize: 12 }} 
             dy={10}
             minTickGap={30}
+            tickFormatter={timeRange === 'MAX' ? formatMonthYear : formatDayMonth}
           />
           <YAxis 
             axisLine={false} 
@@ -155,10 +165,11 @@ export default function PortfolioChart({ data, isArs, range, onRangeChange, star
                   currency: isArs ? 'ARS' : 'USD',
                   minimumFractionDigits: isArs ? 0 : 2,
                   maximumFractionDigits: isArs ? 0 : 2
-                }).format(value), 
+                }).format(value).replace('US$', 'USD'),
                 'Patrimonio Total'
               ]}
               labelStyle={{ color: 'var(--text-muted)', marginBottom: '5px' }}
+              labelFormatter={formatFullDate}
             />
           )}
           <Area 
