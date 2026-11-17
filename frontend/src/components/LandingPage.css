@@ -1121,6 +1121,18 @@
   color: #FFFFFF;
 }
 
+.footer-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.5rem;
+}
+
+.footer-right .app-version {
+  color: #64748B;
+  opacity: 1;
+}
+
 /* ==========================================================================
    6. RESPONSIVE DESIGN
    ========================================================================== */
@@ -1215,6 +1227,9 @@
     flex-direction: column;
     align-items: flex-start;
     gap: 1.5rem;
+  }
+  .footer-right {
+    align-items: flex-start;
   }
   .landing-nav-link.landing-nav-link-visible {
     display: inline-flex;

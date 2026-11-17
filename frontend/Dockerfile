@@ -11,6 +11,9 @@ ARG VITE_API_URL
 ENV VITE_API_URL=$VITE_API_URL
 ARG VITE_GOOGLE_CLIENT_ID
 ENV VITE_GOOGLE_CLIENT_ID=$VITE_GOOGLE_CLIENT_ID
+# Feed the version shown in the footer (see vite.config.js); unset locally, which yields a -dev version.
+ARG BUILD_NUMBER
+ARG GIT_SHA
 RUN npm run build
 
 # Server stage

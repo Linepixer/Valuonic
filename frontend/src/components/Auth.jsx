@@ -5,6 +5,7 @@ import api from '../api';
 import es from '../locales/es.json';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
 import { useToast } from '../context/useToast';
+import AppVersion from './AppVersion';
 import './Auth.css';
 
 export default function Auth({ onLogin }) {
@@ -447,6 +448,7 @@ export default function Auth({ onLogin }) {
           <Link to="/terms" target="_blank" style={{ color: 'inherit', textDecoration: 'none', marginRight: '1rem' }}>Términos de Servicio</Link>
           <Link to="/privacy" target="_blank" style={{ color: 'inherit', textDecoration: 'none', marginRight: '1rem' }}>Política de Privacidad</Link>
           Contacto: <a href="mailto:diazmatias@linepixer.com" style={{ color: 'inherit', textDecoration: 'none' }}>diazmatias@linepixer.com</a>
+          <AppVersion />
         </div>
       </footer>
     </div>

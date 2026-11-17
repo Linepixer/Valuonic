@@ -16,6 +16,7 @@ import Terms from './components/Terms'
 import Privacy from './components/Privacy'
 import api from './api'
 import { getPageTitle } from './pageTitles'
+import AppVersion from './components/AppVersion'
 import './index.css'
 
 function App() {
@@ -190,6 +191,7 @@ function App() {
             <Link to="/terms" target="_blank" style={{ color: 'inherit', textDecoration: 'none', marginRight: '1rem' }}>Términos de Servicio</Link>
             <Link to="/privacy" target="_blank" style={{ color: 'inherit', textDecoration: 'none', marginRight: '1rem' }}>Política de Privacidad</Link>
             Contacto: <a href="mailto:diazmatias@linepixer.com" style={{ color: 'inherit', textDecoration: 'none' }}>diazmatias@linepixer.com</a>
+            <AppVersion />
           </div>
         </footer>
       )}

@@ -513,6 +513,9 @@ select.auth-input option {
     padding: 1rem 1.5rem;
     text-align: center;
   }
+  .auth-footer .app-version {
+    text-align: center;
+  }
   /* Make vertical spacing more compact to avoid scroll */
   .auth-subtitle {
     margin-bottom: 1.5rem;

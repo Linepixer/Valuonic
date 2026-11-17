@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
+import AppVersion from './AppVersion';
 import './LandingPage.css';
 
 export default function About() {
@@ -288,12 +289,15 @@ export default function About() {
             </div>
             <p>Valuonic &copy; 2026 &mdash; Proyecto de c&oacute;digo abierto bajo Licencia MIT para seguimiento de inversiones personales.</p>
           </div>
-          <div className="footer-links">
-            <Link to="/">Página principal</Link>
-            <a href="/login" onClick={(e) => { e.preventDefault(); navigate('/login'); }}>Iniciar sesión</a>
-            <a href="https://github.com/Linepixer/Valuonic" target="_blank" rel="noopener noreferrer">Repositorio GitHub</a>
-            <a href="https://github.com/Linepixer/Valuonic/issues" target="_blank" rel="noopener noreferrer">Reportar un bug</a>
-            <a href="mailto:diazmatias@linepixer.com">Contacto</a>
+          <div className="footer-right">
+            <div className="footer-links">
+              <Link to="/">Página principal</Link>
+              <a href="/login" onClick={(e) => { e.preventDefault(); navigate('/login'); }}>Iniciar sesión</a>
+              <a href="https://github.com/Linepixer/Valuonic" target="_blank" rel="noopener noreferrer">Repositorio GitHub</a>
+              <a href="https://github.com/Linepixer/Valuonic/issues" target="_blank" rel="noopener noreferrer">Reportar un bug</a>
+              <a href="mailto:diazmatias@linepixer.com">Contacto</a>
+            </div>
+            <AppVersion />
           </div>
         </div>
       </footer>

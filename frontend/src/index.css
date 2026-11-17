@@ -309,6 +309,11 @@ tbody tr:hover {
   background: var(--accent-hover);
 }
 
+/* Once scrolled to the bottom, the fixed FAB would sit on top of the footer's right column. */
+body:has(.fab) .app-footer {
+  padding-bottom: calc(60px + 2rem + 0.5rem);
+}
+
 /* Form inputs overrides */
 input, select, textarea {
   padding: 0.75rem !important;
@@ -446,6 +451,23 @@ input:focus, select:focus, textarea:focus {
   font-size: 0.85rem;
 }
 
+/* Build version shown under the footer contact line; injected by vite.config.js. */
+.app-version {
+  display: block;
+  margin-top: 0.35rem;
+  text-align: right;
+  font-size: 0.72rem;
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+  color: inherit;
+  opacity: 0.55;
+  text-decoration: none;
+}
+
+a.app-version:hover {
+  opacity: 0.9;
+}
+
 /* Responsive Fixes */
 .hide-on-desktop {
   display: none !important;
@@ -519,6 +541,10 @@ input:focus, select:focus, textarea:focus {
     gap: 0.5rem;
   }
 
+  .app-footer .app-version {
+    text-align: center;
+  }
+
   .tab {
     font-size: 0.8rem !important;
     white-space: nowrap;
@@ -544,6 +570,10 @@ input:focus, select:focus, textarea:focus {
   
   body {
     padding-bottom: 85px; /* Space for FAB on mobile */
+  }
+
+  body:has(.fab) .app-footer {
+    padding-bottom: 0.5rem;
   }
 
   /* Admin Dashboard Mobile Fixes */
