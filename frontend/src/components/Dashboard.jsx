@@ -15,6 +15,7 @@ import CategoryProgressBars from './CategoryProgressBars';
 import ImportTransactions from './ImportTransactions';
 import XirrCard from './XirrCard';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { PERIOD_COLUMN_SUFFIX, formatPct, getPeriodGain, getPeriodLabel } from '../periods';
 
 const formatCurrency = (value, currency) => {
   return new Intl.NumberFormat('es-AR', {
@@ -84,28 +85,6 @@ const CUSTOM_ASSET_NAMES = {
   'USDT': 'Tether',
   'XRP': 'Ripple'
 };
-
-// Keys match the backend's `periods`; the chart buttons pick one for the whole portfolio screen.
-const PERIOD_LABELS = {
-  '1S': 'última semana',
-  '1M': 'último mes',
-  '3M': 'últimos 3 meses',
-  '6M': 'últimos 6 meses',
-  '1A': 'último año',
-  'MAX': 'desde el inicio',
-};
-
-const PERIOD_COLUMN_SUFFIX = { '1S': '1S', '1M': '1M', '3M': '3M', '6M': '6M', '1A': '1A', 'MAX': 'total' };
-
-const getPeriodGain = (periods, period, isArs) => {
-  const data = periods?.[period];
-  return {
-    gain: (isArs ? data?.gain_ars : data?.gain_usd) ?? 0,
-    pct: (isArs ? data?.gain_pct_ars : data?.gain_pct_usd) ?? null,
-  };
-};
-
-const formatPct = (value) => value.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 const getAssetIcon = (ticker) => {
   const cryptoUrl = {
@@ -376,9 +355,7 @@ export default function Dashboard({ currency }) {
 
   const { gain: totalGain, pct: totalGainPct } = getPeriodGain(portfolio.periods, period, isArs);
   const periodStart = portfolio.periods?.[period]?.start_date;
-  // A period that reaches back before the first operation is the whole history, so say so.
-  const coversFullHistory = !periodStart || history.length === 0 || periodStart < history[0].date;
-  const periodLabel = coversFullHistory ? PERIOD_LABELS.MAX : PERIOD_LABELS[period];
+  const periodLabel = getPeriodLabel(period, periodStart, history[0]?.date);
   const gainColumnSuffix = PERIOD_COLUMN_SUFFIX[period];
 
   const getAssetType = (ticker) => {
@@ -817,6 +794,7 @@ export default function Dashboard({ currency }) {
         <PortfolioAssetDetailView
           asset={selectedAsset}
           currency={currency}
+          periodStarts={portfolio?.periods}
           onBack={() => {
             if (location.state && location.state.tab === 'portfolio_asset_detalle') {
               navigate(-1);

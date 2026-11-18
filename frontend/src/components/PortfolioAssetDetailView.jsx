@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react';
-import { ArrowLeft, RefreshCw, AlertTriangle, ExternalLink } from 'lucide-react';
+import { ArrowLeft, ArrowUpRight, ArrowDownRight, RefreshCw, AlertTriangle, ExternalLink } from 'lucide-react';
 import api from '../api';
 import PortfolioChart from './PortfolioChart';
+import { formatPct, getPeriodGain, getPeriodLabel } from '../periods';
 
-export default function PortfolioAssetDetailView({ asset, currency, onBack, onGoToMarket }) {
+export default function PortfolioAssetDetailView({ asset, currency, periodStarts, onBack, onGoToMarket }) {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [period, setPeriod] = useState('1M');
 
   useEffect(() => {
     const fetchHistory = async () => {
@@ -56,6 +58,12 @@ export default function PortfolioAssetDetailView({ asset, currency, onBack, onGo
   const profit = allTime ? (isArs ? allTime.gain_ars : allTime.gain_usd) : (isArs ? asset.potential_profit_ars : asset.potential_profit_usd);
   const profitPct = allTime ? (isArs ? allTime.gain_pct_ars : allTime.gain_pct_usd) : (isArs ? asset.profit_percentage_ars : asset.profit_percentage_usd);
   const isCrypto = ['BTC', 'XRP'].includes(asset.ticker);
+
+  // Same per-period figure as this asset's row in the portfolio table, so the chart and its number agree.
+  const hasPeriods = Boolean(asset.periods);
+  const { gain: periodGain, pct: periodPct } = getPeriodGain(asset.periods, period, isArs);
+  const periodStart = periodStarts?.[period]?.start_date;
+  const periodLabel = getPeriodLabel(period, periodStart, data[0]?.date);
 
   return (
     <div style={{ paddingBottom: '2rem' }}>
@@ -116,7 +124,7 @@ export default function PortfolioAssetDetailView({ asset, currency, onBack, onGo
             
             {/* Ganancia Neta Destacada */}
             <div style={{ paddingBottom: '1.5rem', borderBottom: '1px solid var(--border)' }}>
-              <div className="summary-label" style={{ fontSize: '0.9rem', marginBottom: '0.5rem' }}>Ganancia Neta</div>
+              <div className="summary-label" style={{ fontSize: '0.9rem', marginBottom: '0.5rem' }}>Ganancia total</div>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: '1rem', flexWrap: 'wrap' }}>
                 <div className={`font-semibold ${profit >= 0 ? 'text-profit' : 'text-loss'}`} style={{ fontSize: '1.8rem', margin: 0, lineHeight: 1 }}>
                   {profit > 0 ? '+' : ''}{formatCurrency(profit)}
@@ -154,7 +162,17 @@ export default function PortfolioAssetDetailView({ asset, currency, onBack, onGo
           </div>
         </div>
 
-        <h3 style={{ marginBottom: '1rem', color: 'var(--text-muted)', fontWeight: 500 }}>Evolución de tu Inversión</h3>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
+          <h3 style={{ margin: 0, color: 'var(--text-muted)', fontWeight: 500 }}>Evolución de tu Inversión</h3>
+          {hasPeriods && (
+            <div className={`badge ${periodGain >= 0 ? 'badge-profit' : 'badge-loss'}`} style={{ fontSize: '0.95rem', padding: '0.2rem 0.6rem' }}>
+              {periodGain >= 0 ? <ArrowUpRight size={16} /> : <ArrowDownRight size={16} />}
+              {formatCurrency(Math.abs(periodGain))}
+              {periodPct !== null && ` (${formatPct(periodPct)}%)`}
+              <span style={{ color: 'var(--text-muted)', fontWeight: 400, marginLeft: '0.35rem' }}>· {periodLabel}</span>
+            </div>
+          )}
+        </div>
 
         {loading ? (
           <div className="text-muted flex-row" style={{ justifyContent: 'center', height: '300px' }}>
@@ -169,7 +187,14 @@ export default function PortfolioAssetDetailView({ asset, currency, onBack, onGo
             No hay datos históricos registrados para tu posesión.
           </div>
         ) : (
-          <PortfolioChart data={data} isArs={isArs} />
+          <PortfolioChart
+            data={data}
+            isArs={isArs}
+            range={period}
+            onRangeChange={setPeriod}
+            startDate={periodStart}
+            isGain={hasPeriods ? periodGain >= 0 : undefined}
+          />
         )}
       </div>
     </div>
