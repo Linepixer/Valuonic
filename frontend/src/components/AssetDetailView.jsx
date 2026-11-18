@@ -1,13 +1,14 @@
 import { useState, useEffect, useMemo } from 'react';
 import { ArrowLeft, RefreshCw, AlertTriangle } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { axisDateFormatter, formatTooltipDate } from '../chartDates';
 import api from '../api';
 
 export default function AssetDetailView({ asset, currency, onBack }) {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [timeRange, setTimeRange] = useState('MAX');
+  const [timeRange, setTimeRange] = useState('1M');
 
   const filteredData = useMemo(() => {
     if (!data || data.length === 0) return [];
@@ -161,6 +162,7 @@ export default function AssetDetailView({ asset, currency, onBack }) {
                   tick={{ fill: 'var(--text-muted)', fontSize: 12 }}
                   dy={10}
                   minTickGap={40}
+                  tickFormatter={axisDateFormatter(timeRange)}
                 />
                 <YAxis
                   axisLine={false}
@@ -186,6 +188,7 @@ export default function AssetDetailView({ asset, currency, onBack }) {
                   itemStyle={{ color: 'var(--text-main)', fontWeight: 'bold' }}
                   formatter={(value) => [formatCurrency(value), 'Precio']}
                   labelStyle={{ color: 'var(--text-muted)', marginBottom: '5px' }}
+                  labelFormatter={formatTooltipDate}
                 />
                   <Area
                     type="monotone"
