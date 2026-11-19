@@ -46,6 +46,30 @@ const formatQuantity = (value, ticker) => {
   return new Intl.NumberFormat('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 4 }).format(value);
 };
 
+// Same baseline as the backend's "1M" period: the last price on or before this day last month (day clamped to the
+// month's length). A fixed count of points is not a month: IOL imports hold weekdays only, the daily job weekends too.
+const sinceOneMonthAgo = (history) => {
+  const now = new Date();
+  const month = now.getUTCMonth() - 1;
+  const lastDay = new Date(Date.UTC(now.getUTCFullYear(), month + 1, 0)).getUTCDate();
+  const cutoff = new Date(Date.UTC(now.getUTCFullYear(), month, Math.min(now.getUTCDate(), lastDay))).toISOString().slice(0, 10);
+  let start = 0;
+  for (let i = history.length - 1; i >= 0; i--) {
+    if (history[i].date <= cutoff) {
+      start = i;
+      break;
+    }
+  }
+  return history.slice(start);
+};
+
+// Ends at the live price shown beside it rather than the last daily snapshot, so the change matches the portfolio's
+// 1M gain. A failed live fetch comes back as 0 and is left out instead of reading as a -100% month.
+const withLivePrice = (history, asset) => {
+  if (!history.length || !(asset.current_price_usd > 0) || !(asset.current_price_ars > 0)) return history;
+  return [...history, { date: 'live', price_usd: asset.current_price_usd, price_ars: asset.current_price_ars }];
+};
+
 const Sparkline = ({ data, dataKey }) => {
   if (!data || data.length === 0) return <div style={{ width: 140, height: 40 }} />;
   const first = data[0][dataKey];
@@ -272,7 +296,7 @@ export default function Dashboard({ currency }) {
         const historyMap = {};
         histories.forEach((res, idx) => {
           if (res && res.data && res.data.history) {
-            historyMap[assets[idx].ticker] = res.data.history.slice(-30);
+            historyMap[assets[idx].ticker] = withLivePrice(sinceOneMonthAgo(res.data.history), assets[idx]);
           }
         });
         setAssetsHistory(historyMap);

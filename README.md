@@ -164,6 +164,18 @@ npm run lint
 
 If the charts look empty or out of date, run `docker compose exec api python -m app.sync_prices`. To download the history from a different Valuonic instance, change `MARKET_DATA_SOURCE_URL` in `.env`.
 
+#### Importing a CEDEAR's history from IOL
+
+For a newly supported CEDEAR, export its daily quotes from IOL's "Cotización histórica" page with **Exportar a excel**, once for the peso ticker (`NVDA`) and once for the dollar one (`NVDAD`), with the same date range. Then copy both files into the API container and run the import:
+
+```bash
+docker compose cp NVDA_Cotizaciones_Historicas.xls api:/tmp/
+docker compose cp NVDAD_Cotizaciones_Historicas.xls api:/tmp/
+docker compose exec api python -m app.import_iol_history NVDA /tmp/NVDA_Cotizaciones_Historicas.xls /tmp/NVDAD_Cotizaciones_Historicas.xls
+```
+
+It only reports what it would import, warning about sharp jumps such as a split, and refuses to go on if the files don't match or a day's implied dollar is out of line. Add `--apply` to save it. Days that already have a price are skipped. On the server, run the same commands with `-f docker-compose.prod.yml`; development databases then get the history through `sync_prices`.
+
 ### Configuration
 
 Every variable is documented in [`.env.example`](.env.example). For local development you don't need to change any of them.
