@@ -96,7 +96,7 @@ Go to [http://localhost:3000](http://localhost:3000) and sign in:
 |---|---|
 | `demo@example.com` | `valuonic-demo` |
 
-This account exists only in your local database. `seed_demo` refuses to run unless the configuration is for local development.
+This account exists only in your local database, and it is also the local admin, so the admin panel works out of the box. `seed_demo` refuses to run unless the configuration is for local development.
 
 | Service | URL |
 |---|---|
@@ -115,7 +115,7 @@ This account exists only in your local database. `seed_demo` refuses to run unle
 
 3. Find the line that starts with `Verification Link:` and open that URL in your browser.
 
-**Admin access.** Add your email to `ADMIN_EMAILS` in `.env`, then recreate the API so it picks up the change:
+**Admin access.** The demo account is already an admin. To make your own account one too, add its email to `ADMIN_EMAILS` in `.env` (comma-separated), then recreate the API so it picks up the change:
 
 ```bash
 docker compose up -d --force-recreate api
@@ -173,7 +173,7 @@ Every variable is documented in [`.env.example`](.env.example). For local develo
 | `SECRET_KEY` | A development-only placeholder | Signs the session tokens. |
 | `FRONTEND_URL` | `http://localhost:3000` | Used in email links. It also decides whether the session cookie requires HTTPS. |
 | `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_HOST`, `SMTP_PORT` | Empty | Sends verification and password-reset emails. When empty, the links are printed in the API logs. |
-| `ADMIN_EMAILS` | Empty | Comma-separated emails with access to the admin panel. |
+| `ADMIN_EMAILS` | `demo@example.com` | Comma-separated emails with access to the admin panel. On a real deployment the API refuses to start with the demo account in it. |
 | `GOOGLE_CLIENT_ID` | Empty | Enables Google sign-in. When empty, only email sign-in works. |
 | `MARKET_DATA_SOURCE_URL` | Valuonic production | Where `seed_demo` and `sync_prices` download history from. |
 | `CORS_ORIGINS` | Not set | Only needed if you move the app off port 3000 (see Troubleshooting). |

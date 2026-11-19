@@ -44,3 +44,12 @@ if settings.COOKIE_SECURE and settings.SECRET_KEY in PUBLISHED_EXAMPLE_SECRET_KE
         "CRITICAL SECURITY ERROR: SECRET_KEY is the public example value from .env.example. "
         "Generate your own with: openssl rand -hex 32"
     )
+
+# .env.example makes the local demo account an admin; its address and password are public, so the same rule applies.
+DEMO_ADMIN_EMAIL = "demo@example.com"
+
+if settings.COOKIE_SECURE and DEMO_ADMIN_EMAIL in settings.ADMIN_EMAILS:
+    raise ValueError(
+        f"CRITICAL SECURITY ERROR: ADMIN_EMAILS includes {DEMO_ADMIN_EMAIL}, the demo admin from .env.example. "
+        "Replace it with your own email."
+    )
