@@ -1,9 +1,10 @@
 """
-Brings this database's price and dollar-rate history up to date from a Valuonic instance's public market data.
+Brings this database's price and dollar-rate history, corporate events and CEDEAR ratios up to date from a
+Valuonic instance's public market data.
 
     docker compose exec api python -m app.sync_prices
 
-Only missing days are added, so it is safe to run as often as you like.
+Only what is missing is added and the ratios are copied, so it is safe to run as often as you like.
 """
 import os
 import sys
@@ -52,7 +53,11 @@ def describe(summary: dict) -> str:
     lines = [
         f"Precios nuevos: {summary['prices_added']} ({', '.join(summary['tickers']) or 'ningún activo'})",
         f"Cotizaciones del dólar nuevas: {summary['rates_added']}",
+        f"Eventos corporativos nuevos: {summary['events_added']}",
+        f"Ratios de CEDEAR actualizados: {summary['ratios_updated']}",
     ]
+    for conflict in summary["event_conflicts"]:
+        lines.append(f"Evento distinto al del origen, se dejó el local: {conflict}")
     if summary["skipped_tickers"]:
         lines.append(f"Omitidos (este código no los soporta todavía): {', '.join(summary['skipped_tickers'])}")
     return "\n".join(lines)

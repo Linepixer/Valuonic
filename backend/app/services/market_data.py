@@ -1,19 +1,23 @@
 """
-Public market-data snapshot: daily asset prices plus the historical dollar rate used to value ARS imports.
+Public market-data snapshot: daily asset prices, the historical dollar rate used to value ARS imports, and the
+corporate events (splits and CEDEAR ratio changes) with each asset's current CEDEAR ratio.
 
 Production serves it at GET /public/market-data and fresh development databases import it with
 `python -m app.sync_prices`, so both sides of the format live here. Old clones keep calling the endpoint,
 so the format only grows: bump MARKET_DATA_VERSION before changing anything that already exists.
 """
+import math
 from collections import defaultdict
 from datetime import date, datetime, time, timezone
 from decimal import Decimal
+from typing import Dict, List, Tuple
 
 from sqlalchemy.orm import Session
 
 from app.core.asset_catalog import SUPPORTED_ASSETS
 from app.models.asset import Asset
 from app.models.asset_price import AssetPrice
+from app.models.corporate_event import CorporateEvent, HOLDINGS_MULTIPLIER_TYPES
 from app.models.exchange_rate import ExchangeRateHistory
 from app.services.catalog_service import ensure_catalog_assets
 from app.services.transaction_service import HISTORICAL_RATE_TYPE
@@ -43,6 +47,13 @@ def build_market_data(db: Session) -> dict:
         .all()
     )
 
+    events = (
+        db.query(CorporateEvent)
+        .filter(CorporateEvent.asset_id.in_(tickers_by_id.keys()), CorporateEvent.type.in_(HOLDINGS_MULTIPLIER_TYPES))
+        .order_by(CorporateEvent.timestamp)
+        .all()
+    )
+
     return {
         "version": MARKET_DATA_VERSION,
         "generated_at": datetime.now(timezone.utc).isoformat(),
@@ -52,11 +63,67 @@ def build_market_data(db: Session) -> dict:
         },
         # Exact timestamps, not days: imports pick the latest rate at or before each operation.
         "dollar_rates": [[rate.timestamp.isoformat(), float(rate.rate_value)] for rate in rates],
+        # Added in place, without a version bump: old clones read only the keys above and ignore these two.
+        "corporate_events": [
+            [tickers_by_id[event.asset_id], event.type, event.ratio, event.timestamp.date().isoformat()]
+            for event in events
+        ],
+        "cedear_ratios": {
+            asset.ticker: asset.current_ratio
+            for asset in sorted(assets, key=lambda a: a.ticker)
+            if asset.current_ratio is not None
+        },
     }
 
 
+def _import_corporate_events(db: Session, assets: Dict[str, Asset], rows: list) -> Tuple[int, List[str]]:
+    # At most one event per asset and day: importing a split that was also entered by hand would multiply the
+    # holdings twice, so an existing event wins and a different one is only reported.
+    existing = {
+        (event.asset_id, event.timestamp.date()): (event.type, event.ratio)
+        for event in db.query(CorporateEvent).all()
+    }
+    added, conflicts = 0, []
+    for ticker, kind, ratio, day_iso in rows:
+        if ticker not in SUPPORTED_ASSETS or kind not in HOLDINGS_MULTIPLIER_TYPES:
+            continue
+        day = date.fromisoformat(day_iso)
+        key = (assets[ticker].id, day)
+        if key in existing:
+            local_kind, local_ratio = existing[key]
+            if local_kind != kind or not math.isclose(local_ratio, ratio, rel_tol=1e-9):
+                conflicts.append(f"{ticker} {day_iso}: acá {local_kind} x{local_ratio:g}, en el origen {kind} x{ratio:g}")
+            continue
+        db.add(CorporateEvent(
+            asset_id=assets[ticker].id,
+            type=kind,
+            ratio=float(ratio),
+            timestamp=datetime.combine(day, time.min, tzinfo=timezone.utc),
+        ))
+        existing[key] = (kind, ratio)
+        added += 1
+    return added, conflicts
+
+
+def _import_cedear_ratios(assets: Dict[str, Asset], ratios: dict) -> int:
+    # Copied instead of rebuilt from the events: a fresh database starts every ratio at 1 (the seeding migration
+    # runs before the catalog assets exist), so only the source holds the real value.
+    updated = 0
+    for ticker, ratio in ratios.items():
+        asset = assets.get(ticker)
+        if ticker not in SUPPORTED_ASSETS or asset is None or ratio is None:
+            continue
+        if asset.current_ratio is None or not math.isclose(asset.current_ratio, ratio, rel_tol=1e-9):
+            asset.current_ratio = float(ratio)
+            updated += 1
+    return updated
+
+
 def import_market_data(db: Session, data: dict) -> dict:
-    """Adds the days and rates this database lacks; existing rows are never touched."""
+    """
+    Adds the days, rates and corporate events this database lacks; existing rows are never touched. The CEDEAR
+    ratios are the exception: they are copied from the source.
+    """
     if data.get("version") != MARKET_DATA_VERSION:
         raise ValueError(f"Formato de datos desconocido (version {data.get('version')}).")
 
@@ -103,10 +170,16 @@ def import_market_data(db: Session, data: dict) -> dict:
         existing_rates.add((ts, rate.normalize()))
         rates_added += 1
 
+    events_added, event_conflicts = _import_corporate_events(db, assets, data.get("corporate_events", []))
+    ratios_updated = _import_cedear_ratios(assets, data.get("cedear_ratios", {}))
+
     db.commit()
     return {
         "prices_added": prices_added,
         "rates_added": rates_added,
+        "events_added": events_added,
+        "event_conflicts": event_conflicts,
+        "ratios_updated": ratios_updated,
         "tickers": sorted(known_tickers),
         "skipped_tickers": skipped_tickers,
     }

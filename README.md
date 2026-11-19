@@ -84,7 +84,7 @@ This does three things:
 
 - creates a demo user;
 - loads the sample transactions from [`samples/demo_transactions.csv`](samples/demo_transactions.csv);
-- downloads price and dollar-rate history from the production instance.
+- downloads price and dollar-rate history, splits and CEDEAR ratios from the production instance.
 
 When it finishes, it prints the login details. It is safe to run again: nothing gets duplicated.
 
@@ -129,7 +129,7 @@ The code is built into the images, so **after changing any code, rebuild with `d
 |---|---|
 | Apply your code changes | `docker compose up -d --build` |
 | Follow the logs | `docker compose logs -f api` (or `web`, `db`) |
-| Update price and dollar-rate history | `docker compose exec api python -m app.sync_prices` |
+| Update market data (prices, dollar rates, splits) | `docker compose exec api python -m app.sync_prices` |
 | Open a database shell | `docker compose exec db psql -U valuonic -d valuonic` |
 | Stop everything (data is kept) | `docker compose down` |
 | Start from scratch (**deletes your local database**) | `docker compose down -v` |
@@ -159,6 +159,7 @@ npm run lint
 
 - **Current prices** are fetched live from IOL, Bitso and DolarHoy, so the app needs an internet connection.
 - **Price and dollar-rate history** is downloaded by `seed_demo` and `sync_prices` from the production instance's public endpoint, `/api/public/market-data`. Both commands only add the days you are missing.
+- **Splits and CEDEAR ratio changes** come with it, so your holdings match production. Events you already have are kept, and each CEDEAR's current ratio is copied.
 - **While the containers are running,** the API also records one price per asset every day at 18:00 UTC.
 
 If the charts look empty or out of date, run `docker compose exec api python -m app.sync_prices`. To download the history from a different Valuonic instance, change `MARKET_DATA_SOURCE_URL` in `.env`.
