@@ -1,0 +1,5 @@
+# The image runs its own `npm ci`; a host node_modules has native binaries for another OS and would leak into it.
+node_modules/
+dist/
+.env
+.env.*

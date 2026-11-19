@@ -1,0 +1,7 @@
+# Keep local environments out of the build context: a host virtualenv or .env must never reach the image.
+venv/
+.venv/
+__pycache__/
+*.pyc
+.env
+.pytest_cache/

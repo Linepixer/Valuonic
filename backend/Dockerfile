@@ -1,5 +1,8 @@
 FROM python:3.11-slim
 
+# Unbuffered so print() output (like the verification links when SMTP is off) shows up in `docker compose logs` at once.
+ENV PYTHONUNBUFFERED=1
+
 WORKDIR /app
 
 RUN apt-get update && apt-get install -y \

@@ -6,11 +6,12 @@ from uuid import UUID
 from app.database import get_db
 from app.api.dependencies import get_current_user
 from app.models.user import User
-from app.models.asset import Asset
 from app.models.transaction import Transaction
 from app.schemas.transaction import TransactionCreate, TransactionResponse
 from app.core.asset_catalog import SUPPORTED_ASSETS, normalize_ticker
 from app.core.rate_limit import limiter
+from app.services.catalog_service import get_or_create_catalog_asset
+from app.services.transaction_service import bulk_create_transactions
 
 router = APIRouter(
     prefix="/transactions",
@@ -27,17 +28,6 @@ def _reject_unsupported(tickers: set[str]) -> None:
             detail=f"Activo no soportado: {', '.join(unsupported)}"
         )
 
-def _get_or_create_asset(db: Session, ticker: str) -> Asset:
-    asset = db.query(Asset).filter(Asset.ticker == ticker).first()
-    if asset:
-        return asset
-    spec = SUPPORTED_ASSETS[ticker]
-    asset = Asset(ticker=ticker, name=spec["name"], type=spec["type"], currency="USD")
-    db.add(asset)
-    db.commit()
-    db.refresh(asset)
-    return asset
-
 @router.post("/", response_model=TransactionResponse, status_code=status.HTTP_201_CREATED)
 def create_transaction(
     tx_in: TransactionCreate,
@@ -46,7 +36,7 @@ def create_transaction(
 ):
     ticker = normalize_ticker(tx_in.ticker)
     _reject_unsupported({ticker})
-    asset = _get_or_create_asset(db, ticker)
+    asset = get_or_create_catalog_asset(db, ticker)
 
     db_tx = Transaction(
         user_id=current_user.id,
@@ -81,57 +71,9 @@ def create_bulk_transactions(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    from app.models.exchange_rate import ExchangeRateHistory
-    from sqlalchemy import desc
-
     # Validate the whole file first so a bad row can't leave a half-imported history behind.
     _reject_unsupported({normalize_ticker(tx.ticker) for tx in txs_in})
-
-    assets_cache = {}
-    created_count = 0
-    
-    for tx_in in txs_in:
-        ticker = normalize_ticker(tx_in.ticker)
-        if ticker not in assets_cache:
-            assets_cache[ticker] = _get_or_create_asset(db, ticker).id
-            
-        asset_id = assets_cache[ticker]
-        
-        exchange_rate = tx_in.exchange_rate
-        if not exchange_rate and tx_in.timestamp:
-            closest_rate = db.query(ExchangeRateHistory).filter(
-                ExchangeRateHistory.rate_type == "historico",
-                ExchangeRateHistory.timestamp <= tx_in.timestamp
-            ).order_by(desc(ExchangeRateHistory.timestamp)).first()
-            
-            if closest_rate:
-                exchange_rate = closest_rate.rate_value
-            else:
-                earliest_rate = db.query(ExchangeRateHistory).filter(
-                    ExchangeRateHistory.rate_type == "historico"
-                ).order_by(ExchangeRateHistory.timestamp).first()
-                exchange_rate = earliest_rate.rate_value if earliest_rate else 1
-        
-        db_tx = Transaction(
-            user_id=current_user.id,
-            asset_id=asset_id,
-            type=tx_in.type,
-            quantity=tx_in.quantity,
-            price_per_unit=tx_in.price_per_unit,
-            total_value=tx_in.total_value,
-            operated_currency=tx_in.operated_currency,
-            exchange_rate=exchange_rate,
-            platform=tx_in.platform,
-            notes=tx_in.notes
-        )
-        if tx_in.timestamp:
-            db_tx.timestamp = tx_in.timestamp
-            
-        db.add(db_tx)
-        created_count += 1
-        
-    db.commit()
-    
+    created_count = bulk_create_transactions(db, current_user.id, txs_in)
     return {"message": "Transacciones importadas exitosamente", "count": created_count}
 
 @router.get("/", response_model=list[TransactionResponse])

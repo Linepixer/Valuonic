@@ -25,10 +25,8 @@ def fetch_and_save_prices():
         rates = PriceFetcher.get_dollar_rates()
         usd_to_ars = rates.get("cripto") or rates.get("blue") or rates.get("bolsa") or 1500.0
 
+        # Stablecoins are tracked too: worth 1 in USD, but their ARS price moves with the dollar every day.
         for asset in assets:
-            if asset.ticker.upper() in ["USD", "USDT", "USDC"]:
-                continue # Exclude stablecoin to stablecoin historical tracking.
-                
             prices = PriceFetcher.get_asset_prices(asset.ticker, asset.type)
             if prices:
                 price_usd = prices["usd"]

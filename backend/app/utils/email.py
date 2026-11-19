@@ -106,8 +106,8 @@ def send_verification_email(to_email: str, token: str) -> None:
 
     smtp_user = os.getenv("SMTP_USER")
     smtp_password = os.getenv("SMTP_PASSWORD")
-    smtp_host = os.getenv("SMTP_HOST", "smtp.zoho.com")
-    smtp_port = int(os.getenv("SMTP_PORT", 465))
+    smtp_host = os.getenv("SMTP_HOST") or "smtp.zoho.com"
+    smtp_port = int(os.getenv("SMTP_PORT") or 465)
 
     if smtp_user and smtp_password:
         try:
@@ -236,8 +236,8 @@ def send_password_reset_email(to_email: str, token: str) -> None:
 
     smtp_user = os.getenv("SMTP_USER")
     smtp_password = os.getenv("SMTP_PASSWORD")
-    smtp_host = os.getenv("SMTP_HOST", "smtp.zoho.com")
-    smtp_port = int(os.getenv("SMTP_PORT", 465))
+    smtp_host = os.getenv("SMTP_HOST") or "smtp.zoho.com"
+    smtp_port = int(os.getenv("SMTP_PORT") or 465)
 
     if smtp_user and smtp_password:
         try:
@@ -369,8 +369,8 @@ def send_admin_account_deletion_email(admin_email: str, token: str, user_to_dele
 
     smtp_user = os.getenv("SMTP_USER")
     smtp_password = os.getenv("SMTP_PASSWORD")
-    smtp_host = os.getenv("SMTP_HOST", "smtp.zoho.com")
-    smtp_port = int(os.getenv("SMTP_PORT", 465))
+    smtp_host = os.getenv("SMTP_HOST") or "smtp.zoho.com"
+    smtp_port = int(os.getenv("SMTP_PORT") or 465)
 
     if smtp_user and smtp_password:
         try:
@@ -498,8 +498,8 @@ def send_account_deletion_email(to_email: str, token: str) -> None:
 
     smtp_user = os.getenv("SMTP_USER")
     smtp_password = os.getenv("SMTP_PASSWORD")
-    smtp_host = os.getenv("SMTP_HOST", "smtp.zoho.com")
-    smtp_port = int(os.getenv("SMTP_PORT", 465))
+    smtp_host = os.getenv("SMTP_HOST") or "smtp.zoho.com"
+    smtp_port = int(os.getenv("SMTP_PORT") or 465)
 
     if smtp_user and smtp_password:
         try:

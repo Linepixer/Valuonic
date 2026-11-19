@@ -4,8 +4,13 @@ services:
     container_name: valuonic-db
     env_file:
       - .env
-    ports:
-      - "5432:5432"
+    # Not published on the host: the API reaches it over the compose network, and a host port would clash
+    # with any Postgres already installed on the machine. Use `docker compose exec db psql` to inspect it.
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 2s
+      timeout: 5s
+      retries: 30
     volumes:
       - postgres_data:/var/lib/postgresql/data
     restart: unless-stopped
@@ -21,8 +26,13 @@ services:
       - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
     ports:
       - "8000:8000"
+    volumes:
+      # Demo transactions for `python -m app.seed_demo`.
+      - ./samples:/app/samples:ro
     depends_on:
-      - db
+      # The API runs migrations on start, so it must wait until Postgres accepts connections.
+      db:
+        condition: service_healthy
     restart: unless-stopped
 
   web:
@@ -31,6 +41,8 @@ services:
       args:
         # API URL accessible from the client's browser
         - VITE_API_URL=http://localhost:8000
+        # Same Client ID as the API, so a single .env configures Google login.
+        - VITE_GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID:-}
     container_name: valuonic-web
     ports:
       - "3000:80"
