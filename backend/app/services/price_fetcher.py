@@ -72,6 +72,8 @@ class PriceFetcher:
             "QQQD": "https://iol.invertironline.com/titulo/cotizacion/BCBA/QQQD/ETF-INVESCO-QQQ-TRUST/",
             "GLD": "https://iol.invertironline.com/titulo/cotizacion/BCBA/GLD/CEDEAR-ETF-SPDR-GOLD-TRUST/",
             "GLDD": "https://iol.invertironline.com/titulo/cotizacion/BCBA/GLDD/CEDEAR-ETF-SPDR-GOLD-TRUST/",
+            "NVDA": "https://iol.invertironline.com/titulo/cotizacion/BCBA/NVDA/CEDEAR-NVIDIA-CORPORATION/",
+            "NVDAD": "https://iol.invertironline.com/titulo/cotizacion/BCBA/NVDAD/CEDEAR-NVIDIA-CORPORATION/",
         }
         
         t = ticker.upper()

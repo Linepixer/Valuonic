@@ -5,6 +5,7 @@ SUPPORTED_ASSETS: dict[str, dict[str, str]] = {
     "SPY": {"name": "S&P 500 ETF", "type": "ETF"},
     "QQQ": {"name": "Invesco QQQ Trust", "type": "ETF"},
     "GLD": {"name": "SPDR Gold Shares", "type": "ETF"},
+    "NVDA": {"name": "NVIDIA Corporation", "type": "Acción"},
     "BTC": {"name": "Bitcoin", "type": "Criptomoneda"},
     "XRP": {"name": "Ripple", "type": "Criptomoneda"},
     "USDT": {"name": "Tether", "type": "Criptomoneda"},
