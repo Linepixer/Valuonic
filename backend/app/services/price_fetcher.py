@@ -76,6 +76,13 @@ class PriceFetcher:
             "NVDAD": "https://iol.invertironline.com/titulo/cotizacion/BCBA/NVDAD/CEDEAR-NVIDIA-CORPORATION/",
             "KO": "https://iol.invertironline.com/titulo/cotizacion/BCBA/KO/CEDEAR-THE-COCA-COLA-COMPANY/",
             "KOD": "https://iol.invertironline.com/titulo/cotizacion/BCBA/KOD/CEDEAR-THE-COCA-COLA-COMPANY/",
+            "MELI": "https://iol.invertironline.com/titulo/cotizacion/BCBA/MELI/CEDEAR-MERCADOLIBRE-INC./",
+            "MELID": "https://iol.invertironline.com/titulo/cotizacion/BCBA/MELID/CEDEAR-MERCADOLIBRE-INC./",
+            # The CEDEAR on BCBA, not IOL's NASDAQ page for AAPL, which quotes the US share in dollars.
+            "AAPL": "https://iol.invertironline.com/titulo/cotizacion/BCBA/AAPL/CEDEAR-APPLE-INC./",
+            "AAPLD": "https://iol.invertironline.com/titulo/cotizacion/BCBA/AAPLD/CEDEAR-APPLE-INC./",
+            "AMD": "https://iol.invertironline.com/titulo/cotizacion/BCBA/AMD/CEDEAR-ADVANCED-MICRO-DEVICES-/",
+            "AMDD": "https://iol.invertironline.com/titulo/cotizacion/BCBA/AMDD/CEDEAR-ADVANCED-MICRO-DEVICES-/",
         }
         
         t = ticker.upper()
