@@ -12,7 +12,7 @@ from fastapi import HTTPException
 from app.models.transaction import Transaction
 from app.models.asset import Asset
 from app.models.asset_price import AssetPrice
-from app.models.corporate_event import CorporateEvent
+from app.models.corporate_event import CorporateEvent, HOLDINGS_MULTIPLIER_TYPES
 from app.schemas.portfolio import (
     PeriodGain,
     PortfolioAsset,
@@ -316,7 +316,7 @@ def get_portfolio_summary(db: Session, user_id: UUID) -> PortfolioSummary:
     corporate_events = db.query(CorporateEvent).all()
     splits_by_asset = defaultdict(list)
     for event in corporate_events:
-        if event.type.lower() == "split":
+        if event.type in HOLDINGS_MULTIPLIER_TYPES:
             splits_by_asset[event.asset_id].append(event)
     
     for t in transactions:
@@ -491,7 +491,7 @@ def get_portfolio_summary(db: Session, user_id: UUID) -> PortfolioSummary:
         if user_asset_ids else []
     )
     # Same split filter as the history chart, so both walk identical holdings.
-    chart_splits = [e for e in corporate_events if e.type == "split"]
+    chart_splits = [e for e in corporate_events if e.type in HOLDINGS_MULTIPLIER_TYPES]
     periods, periods_by_asset = _compute_period_gains(
         sorted(transactions, key=lambda t: t.timestamp),
         price_rows,
@@ -520,7 +520,7 @@ def get_portfolio_history(db: Session, user_id: UUID) -> PortfolioHistoryRespons
         return PortfolioHistoryResponse(history=[])
         
     prices = db.query(AssetPrice).order_by(AssetPrice.timestamp).all()
-    corporate_events = db.query(CorporateEvent).filter(CorporateEvent.type == "split").all()
+    corporate_events = db.query(CorporateEvent).filter(CorporateEvent.type.in_(HOLDINGS_MULTIPLIER_TYPES)).all()
     
     # We will compute daily values from the first transaction to today
     start_date = transactions[0].timestamp.date()
@@ -560,7 +560,7 @@ def get_portfolio_asset_history(db: Session, user_id: UUID, ticker: str) -> Port
     prices = db.query(AssetPrice).filter(AssetPrice.asset_id == asset.id).order_by(AssetPrice.timestamp).all()
     corporate_events = db.query(CorporateEvent).filter(
         CorporateEvent.asset_id == asset.id,
-        CorporateEvent.type == "split"
+        CorporateEvent.type.in_(HOLDINGS_MULTIPLIER_TYPES)
     ).all()
     
     # We will compute daily values from the first transaction to today

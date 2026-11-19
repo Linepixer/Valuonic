@@ -2,6 +2,9 @@ import { useState, useEffect, useRef } from 'react';
 import { Plus, Trash2, Calendar, TrendingDown, X, Info } from 'lucide-react';
 import api from '../api';
 
+// "split" is the stored name of a CEDEAR ratio change; "stock_split" multiplies holdings without touching the ratio.
+const EVENT_TYPE_LABELS = { split: 'Cambio de ratio', stock_split: 'Split' };
+
 export default function CorporateEventsManager() {
   const [events, setEvents] = useState([]);
   const [assets, setAssets] = useState([]);
@@ -11,6 +14,7 @@ export default function CorporateEventsManager() {
   // Form state
   const [showForm, setShowForm] = useState(false);
   const [formAssetId, setFormAssetId] = useState('');
+  const [formType, setFormType] = useState('split');
   const [formNewRatio, setFormNewRatio] = useState('');
   const [formDate, setFormDate] = useState('');
   const [formSubmitting, setFormSubmitting] = useState(false);
@@ -27,6 +31,7 @@ export default function CorporateEventsManager() {
   const closeForm = () => {
     setShowForm(false);
     setFormAssetId('');
+    setFormType('split');
     setFormNewRatio('');
     setFormDate('');
   };
@@ -76,11 +81,13 @@ export default function CorporateEventsManager() {
       // Append time to date to ensure proper datetime format (beginning of day UTC)
       const timestamp = new Date(`${formDate}T00:00:00Z`).toISOString();
       const oldRatio = selectedAsset.current_ratio || 1.0;
-      const calculatedRatio = parseFloat(formNewRatio) / oldRatio;
+      const calculatedRatio = formType === 'stock_split'
+        ? parseFloat(formNewRatio)
+        : parseFloat(formNewRatio) / oldRatio;
 
       const res = await api.post('/corporate-events/', {
         asset_id: formAssetId,
-        type: 'split',
+        type: formType,
         ratio: calculatedRatio,
         timestamp: timestamp
       });
@@ -130,7 +137,7 @@ export default function CorporateEventsManager() {
           <div className="modal-overlay" onMouseDown={(e) => { if (e.target === e.currentTarget && !formSubmitting) closeForm(); }}>
             <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '600px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', padding: '1.5rem', borderBottom: '1px solid var(--border)' }}>
-                <h2 style={{ margin: 0, paddingRight: '1rem', lineHeight: '1.2' }}>Registrar cambio de ratio</h2>
+                <h2 style={{ margin: 0, paddingRight: '1rem', lineHeight: '1.2' }}>Registrar cambio</h2>
                 <button onClick={closeForm} style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
                   <X size={24} />
                 </button>
@@ -162,13 +169,23 @@ export default function CorporateEventsManager() {
                     </div>
 
                     <div style={{ opacity: formAssetId ? 1 : 0.4, pointerEvents: formAssetId ? 'auto' : 'none', transition: 'all 0.3s' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
-                        <label className="summary-label" style={{ marginBottom: 0 }}>Ratio de conversión <span className="text-loss">*</span></label>
-                        <div className="tooltip-container">
-                          <Info size={14} color="var(--text-muted)" style={{ cursor: 'help' }} />
-                          <div className="tooltip-content">
-                            Ingresá cuántos CEDEARs equivalían a 1 acción real ANTES del split, y cuántos equivalen AHORA. El sistema calculará el factor multiplicador automáticamente.
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px', marginBottom: '8px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <label className="summary-label" style={{ marginBottom: 0 }}>
+                            {formType === 'stock_split' ? 'Split de la acción' : 'Ratio de conversión'} <span className="text-loss">*</span>
+                          </label>
+                          <div className="tooltip-container">
+                            <Info size={14} color="var(--text-muted)" style={{ cursor: 'help' }} />
+                            <div className="tooltip-content">
+                              {formType === 'stock_split'
+                                ? 'Para cuando la acción se divide y el ratio del CEDEAR se mantiene. Por ejemplo, 10 por 1 multiplica los CEDEARs por 10 sin cambiar el ratio vigente.'
+                                : 'Ingresá cuántos CEDEARs equivalían a 1 acción real ANTES del cambio, y cuántos equivalen AHORA. El sistema calculará el factor multiplicador automáticamente.'}
+                            </div>
                           </div>
+                        </div>
+                        <div className="currency-toggle" role="group" aria-label="Tipo de cambio">
+                          <button type="button" className={`toggle-btn ${formType === 'split' ? 'active' : ''}`} onClick={() => setFormType('split')}>Cambio de ratio</button>
+                          <button type="button" className={`toggle-btn ${formType === 'stock_split' ? 'active' : ''}`} onClick={() => setFormType('stock_split')}>Split</button>
                         </div>
                       </div>
 
@@ -187,7 +204,9 @@ export default function CorporateEventsManager() {
                         </div>
 
                         <div>
-                          <label className="summary-label" style={{ fontSize: '0.75rem', color: 'var(--accent)' }}>NUEVO RATIO A APLICAR</label>
+                          <label className="summary-label" style={{ fontSize: '0.75rem', color: 'var(--accent)' }}>
+                            {formType === 'stock_split' ? 'PROPORCIÓN DEL SPLIT' : 'NUEVO RATIO A APLICAR'}
+                          </label>
                           <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'nowrap', gap: '12px', marginTop: '12px' }}>
                             <input
                               ref={newRatioInputRef}
@@ -200,12 +219,16 @@ export default function CorporateEventsManager() {
                                   setFormNewRatio(val);
                                 }
                               }}
-                              placeholder="Cantidad"
+                              placeholder={formType === 'stock_split' ? '10' : 'Cantidad'}
                               required={!!formAssetId}
                               style={{ flex: '1', maxWidth: '120px', padding: '0.8rem', background: 'var(--bg-card)', border: formNewRatio ? '1px solid var(--accent)' : '1px solid var(--border)', color: 'var(--text-main)', borderRadius: '6px', textAlign: 'center', fontSize: '1rem', fontWeight: 'bold', transition: 'border 0.2s', outline: 'none' }}
                             />
                             <span style={{ fontSize: '0.95rem', color: 'var(--text-main)', whiteSpace: 'nowrap', fontWeight: '500' }}>
-                              CEDEARs = <span style={{ fontSize: '1.1rem', fontWeight: 'bold' }}>1</span> {assets.find(a => a.id === formAssetId)?.ticker || 'Acción'}
+                              {formType === 'stock_split' ? (
+                                <>por <span style={{ fontSize: '1.1rem', fontWeight: 'bold' }}>1</span></>
+                              ) : (
+                                <>CEDEARs = <span style={{ fontSize: '1.1rem', fontWeight: 'bold' }}>1</span> {assets.find(a => a.id === formAssetId)?.ticker || 'Acción'}</>
+                              )}
                             </span>
                           </div>
                         </div>
@@ -293,7 +316,7 @@ export default function CorporateEventsManager() {
                 {events.map(event => (
                   <tr key={event.id} style={{ borderBottom: '1px solid var(--border)' }}>
                     <td data-label="Activo" style={{ padding: '12px 15px', fontWeight: 'bold' }}>{event.asset_ticker}</td>
-                    <td data-label="Tipo" style={{ padding: '12px 15px', textTransform: 'capitalize' }}>{event.type}</td>
+                    <td data-label="Tipo" style={{ padding: '12px 15px' }}>{EVENT_TYPE_LABELS[event.type] || event.type}</td>
                     <td data-label="Multiplicador" style={{ padding: '12px 15px' }}>
                       <span style={{ color: event.ratio > 1 ? 'var(--profit)' : 'var(--loss)' }}>
                         x{event.ratio}

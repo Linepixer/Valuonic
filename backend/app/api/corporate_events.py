@@ -8,7 +8,7 @@ from uuid import UUID
 from app.database import get_db
 from app.models.user import User
 from app.models.asset import Asset
-from app.models.corporate_event import CorporateEvent
+from app.models.corporate_event import CorporateEvent, HOLDINGS_MULTIPLIER_TYPES, RATIO_CHANGE
 from app.schemas.corporate_event import CorporateEventCreate, CorporateEventResponse
 from app.api.dependencies import get_current_superadmin
 
@@ -46,6 +46,8 @@ def create_corporate_event(
     asset = db.query(Asset).filter(Asset.id == event.asset_id).first()
     if not asset:
         raise HTTPException(status_code=404, detail="Activo no encontrado")
+    if event.type not in HOLDINGS_MULTIPLIER_TYPES:
+        raise HTTPException(status_code=400, detail="Tipo de evento desconocido")
     if not math.isfinite(event.ratio) or event.ratio <= 0:
         raise HTTPException(status_code=400, detail="El ratio tiene que ser un número mayor a cero")
 
@@ -56,7 +58,7 @@ def create_corporate_event(
         timestamp=event.timestamp
     )
     
-    if event.type == 'split':
+    if event.type == RATIO_CHANGE:
         asset.current_ratio = (asset.current_ratio or 1.0) * event.ratio
 
     db.add(db_event)
@@ -76,8 +78,8 @@ def delete_corporate_event(
     if not db_event:
         raise HTTPException(status_code=404, detail="Evento corporativo no encontrado")
 
-    # current_ratio is the product of every split applied so far, so deleting one divides its factor back out.
-    if db_event.type == 'split' and db_event.ratio and db_event.asset:
+    # current_ratio is the product of every ratio change applied so far, so deleting one divides its factor back out.
+    if db_event.type == RATIO_CHANGE and db_event.ratio and db_event.asset:
         db_event.asset.current_ratio = (db_event.asset.current_ratio or 1.0) / db_event.ratio
 
     db.delete(db_event)
