@@ -1,3 +1,5 @@
+import math
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List
@@ -44,7 +46,9 @@ def create_corporate_event(
     asset = db.query(Asset).filter(Asset.id == event.asset_id).first()
     if not asset:
         raise HTTPException(status_code=404, detail="Activo no encontrado")
-        
+    if not math.isfinite(event.ratio) or event.ratio <= 0:
+        raise HTTPException(status_code=400, detail="El ratio tiene que ser un número mayor a cero")
+
     db_event = CorporateEvent(
         asset_id=event.asset_id,
         type=event.type,
@@ -53,10 +57,8 @@ def create_corporate_event(
     )
     
     if event.type == 'split':
-        if asset.current_ratio is None:
-            asset.current_ratio = 1.0
-        asset.current_ratio = asset.current_ratio * event.ratio
-        
+        asset.current_ratio = (asset.current_ratio or 1.0) * event.ratio
+
     db.add(db_event)
     db.commit()
     db.refresh(db_event)
@@ -73,7 +75,11 @@ def delete_corporate_event(
     db_event = db.query(CorporateEvent).filter(CorporateEvent.id == event_id).first()
     if not db_event:
         raise HTTPException(status_code=404, detail="Evento corporativo no encontrado")
-        
+
+    # current_ratio is the product of every split applied so far, so deleting one divides its factor back out.
+    if db_event.type == 'split' and db_event.ratio and db_event.asset:
+        db_event.asset.current_ratio = (db_event.asset.current_ratio or 1.0) / db_event.ratio
+
     db.delete(db_event)
     db.commit()
     return None

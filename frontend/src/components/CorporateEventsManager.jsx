@@ -35,6 +35,21 @@ export default function CorporateEventsManager() {
     fetchData();
   }, []);
 
+  const toSplittableAssets = (data) => data
+    .filter(a => !['BTC', 'XRP', 'USDT', 'USD'].includes(a.ticker))
+    .sort((a, b) => a.ticker.localeCompare(b.ticker));
+
+  // Every split changes the asset's current ratio on the server and the next one is computed from it,
+  // so the copy shown in the form has to be reloaded after each change.
+  const refreshAssets = async () => {
+    try {
+      const res = await api.get('/assets');
+      setAssets(toSplittableAssets(res.data));
+    } catch {
+      alert("No se pudo actualizar el ratio vigente. Recargá la página antes de registrar otro cambio.");
+    }
+  };
+
   const fetchData = async () => {
     try {
       setLoading(true);
@@ -43,8 +58,7 @@ export default function CorporateEventsManager() {
         api.get('/assets')
       ]);
       setEvents(eventsRes.data);
-      const filteredAssets = assetsRes.data.filter(a => !['BTC', 'XRP', 'USDT', 'USD'].includes(a.ticker));
-      setAssets(filteredAssets.sort((a, b) => a.ticker.localeCompare(b.ticker)));
+      setAssets(toSplittableAssets(assetsRes.data));
     } catch {
       setError("Error al cargar eventos corporativos.");
     } finally {
@@ -73,6 +87,7 @@ export default function CorporateEventsManager() {
 
       setEvents([res.data, ...events]);
       closeForm();
+      refreshAssets();
     } catch (err) {
       alert(err.response?.data?.detail || "Error al crear el evento");
     } finally {
@@ -86,6 +101,7 @@ export default function CorporateEventsManager() {
     try {
       await api.delete(`/corporate-events/${id}`);
       setEvents(events.filter(e => e.id !== id));
+      refreshAssets();
     } catch (err) {
       alert(err.response?.data?.detail || "Error al eliminar");
     }
