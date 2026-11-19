@@ -28,13 +28,13 @@ export default function TransactionForm({ onTransactionAdded, exchangeRates }) {
     }
     let rate = '';
     if (['BTC', 'XRP', 'USDT'].includes(ticker)) rate = exchangeRates.cripto;
-    else if (['SPY', 'QQQ', 'GLD', 'NVDA'].includes(ticker)) rate = exchangeRates.bolsa;
+    else if (['SPY', 'QQQ', 'GLD', 'NVDA', 'KO'].includes(ticker)) rate = exchangeRates.bolsa;
     else rate = exchangeRates.blue;
 
     if (rate) setExchangeRate(rate);
   }, [ticker, exchangeRates]);
 
-  const TICKERS = ['USD', 'SPY', 'QQQ', 'GLD', 'NVDA', 'BTC', 'XRP', 'USDT'];
+  const TICKERS = ['USD', 'SPY', 'QQQ', 'GLD', 'NVDA', 'KO', 'BTC', 'XRP', 'USDT'];
   const OPERATIONS = ['Compra', 'Intereses', 'Venta', 'Fee de Red'];
 
   const isIntereses = type === 'Intereses';
@@ -43,7 +43,7 @@ export default function TransactionForm({ onTransactionAdded, exchangeRates }) {
   const getExchangeRateLabel = () => {
     if (!ticker) return 'Cotización del Dólar';
     if (['BTC', 'XRP', 'USDT'].includes(ticker)) return 'Cotización del Dólar Cripto';
-    if (['SPY', 'QQQ', 'GLD', 'NVDA'].includes(ticker)) return 'Cotización del Dólar Bolsa';
+    if (['SPY', 'QQQ', 'GLD', 'NVDA', 'KO'].includes(ticker)) return 'Cotización del Dólar Bolsa';
     return 'Cotización del Dólar Blue';
   };
 

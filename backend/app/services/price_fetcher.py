@@ -74,6 +74,8 @@ class PriceFetcher:
             "GLDD": "https://iol.invertironline.com/titulo/cotizacion/BCBA/GLDD/CEDEAR-ETF-SPDR-GOLD-TRUST/",
             "NVDA": "https://iol.invertironline.com/titulo/cotizacion/BCBA/NVDA/CEDEAR-NVIDIA-CORPORATION/",
             "NVDAD": "https://iol.invertironline.com/titulo/cotizacion/BCBA/NVDAD/CEDEAR-NVIDIA-CORPORATION/",
+            "KO": "https://iol.invertironline.com/titulo/cotizacion/BCBA/KO/CEDEAR-THE-COCA-COLA-COMPANY/",
+            "KOD": "https://iol.invertironline.com/titulo/cotizacion/BCBA/KOD/CEDEAR-THE-COCA-COLA-COMPANY/",
         }
         
         t = ticker.upper()

@@ -6,6 +6,7 @@ SUPPORTED_ASSETS: dict[str, dict[str, str]] = {
     "QQQ": {"name": "Invesco QQQ Trust", "type": "ETF"},
     "GLD": {"name": "SPDR Gold Shares", "type": "ETF"},
     "NVDA": {"name": "NVIDIA Corporation", "type": "Acción"},
+    "KO": {"name": "The Coca-Cola Company", "type": "Acción"},
     "BTC": {"name": "Bitcoin", "type": "Criptomoneda"},
     "XRP": {"name": "Ripple", "type": "Criptomoneda"},
     "USDT": {"name": "Tether", "type": "Criptomoneda"},
