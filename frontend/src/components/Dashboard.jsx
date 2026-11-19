@@ -7,6 +7,7 @@ import TransactionsList from './TransactionsList';
 import MonthlyInvestmentWidget from './MonthlyInvestmentWidget';
 import PassiveIncomeWidget from './PassiveIncomeWidget';
 import CompoundInterestWidget from './CompoundInterestWidget';
+import PeriodMoversWidget from './PeriodMoversWidget';
 import PieChartComponent from './PieChartComponent';
 import PortfolioChart from './PortfolioChart';
 import AssetDetailView from './AssetDetailView';
@@ -358,6 +359,18 @@ export default function Dashboard({ currency }) {
   const periodLabel = getPeriodLabel(period, periodStart, history[0]?.date);
   const gainColumnSuffix = PERIOD_COLUMN_SUFFIX[period];
 
+  const periodMovers = (
+    <PeriodMoversWidget
+      assets={portfolio.assets}
+      period={period}
+      periodLabel={periodLabel}
+      currency={currency}
+      getName={(asset) => CUSTOM_ASSET_NAMES[asset.ticker] || asset.name}
+      onSelect={(asset) => navigateTo('portfolio_asset_detalle', asset)}
+      onViewAll={() => navigateTo('cotizaciones')}
+    />
+  );
+
   const getAssetType = (ticker) => {
     const asset = allAssets.find(a => a.ticker === ticker);
     if (asset) {
@@ -506,6 +519,9 @@ export default function Dashboard({ currency }) {
                   <div className="animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
                     <CompoundInterestWidget portfolio={portfolio} currency={currency} />
                   </div>
+                  <div className="animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
+                    {periodMovers}
+                  </div>
                 </div>
               )}
 
@@ -557,7 +573,7 @@ export default function Dashboard({ currency }) {
                             <td className="text-right">{formatCurrency(currentPrice, currency)}</td>
                             <td className="text-right text-muted">{formatCurrency(avgPrice, currency)}</td>
                             <td className="text-right font-semibold">{formatCurrency(value, currency)}</td>
-                            <td className={`text-right ${profit >= 0 ? 'text-profit' : 'text-loss'}`}>
+                            <td className={`text-right ${profit >= 0 ? 'text-profit' : 'text-loss'}`} style={{ whiteSpace: 'nowrap' }}>
                               {profit > 0 ? '+' : ''}{formatCurrency(profit, currency)}
                             </td>
                             <td className="text-right">
@@ -628,7 +644,7 @@ export default function Dashboard({ currency }) {
                           </div>
                           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
                             <span className="text-muted" style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Ganancia {gainColumnSuffix}</span>
-                            <span className={`font-semibold ${profit >= 0 ? 'text-profit' : 'text-loss'}`} style={{ fontSize: '0.95rem' }}>
+                            <span className={`font-semibold ${profit >= 0 ? 'text-profit' : 'text-loss'}`} style={{ fontSize: '0.95rem', whiteSpace: 'nowrap' }}>
                               {profit > 0 ? '+' : ''}{formatCurrency(profit, currency)}
                             </span>
                           </div>
@@ -649,6 +665,9 @@ export default function Dashboard({ currency }) {
               </div>
               <div className="animate-fade-in-up" style={{ animationDelay: '0.6s' }}>
                 <CompoundInterestWidget portfolio={portfolio} currency={currency} />
+              </div>
+              <div className="animate-fade-in-up" style={{ animationDelay: '0.8s' }}>
+                {periodMovers}
               </div>
             </div>
           )}
