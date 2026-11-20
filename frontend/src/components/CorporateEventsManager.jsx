@@ -325,7 +325,8 @@ export default function CorporateEventsManager() {
                     <td data-label="Fecha Efectiva" style={{ padding: '12px 15px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                         <Calendar size={14} color="var(--text-muted)" />
-                        {new Date(event.timestamp).toLocaleDateString()}
+                        {/* Saved as 00:00 UTC of the effective day; local time west of UTC would show the day before. */}
+                        {new Date(event.timestamp).toLocaleDateString('es-AR', { timeZone: 'UTC' })}
                       </div>
                     </td>
                     <td data-label="Acciones" style={{ padding: '12px 15px', textAlign: 'right' }}>
