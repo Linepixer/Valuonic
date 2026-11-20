@@ -1,8 +1,8 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, memo } from 'react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { axisDateFormatter, formatTooltipDate } from '../chartDates';
 
-export default function PortfolioChart({ data, isArs, range, onRangeChange, startDate, isGain }) {
+function PortfolioChart({ data, isArs, range, onRangeChange, startDate, isGain }) {
   const [internalRange, setInternalRange] = useState('1M');
   // The portfolio screen owns the period because it also drives the header and the table; other views keep their own.
   const timeRange = range ?? internalRange;
@@ -172,7 +172,7 @@ export default function PortfolioChart({ data, isArs, range, onRangeChange, star
             fill="url(#colorValue)" 
             strokeWidth={3}
             animationBegin={0}
-            animationDuration={600}
+            animationDuration={780}
             activeDot={{ r: 6, fill: color, stroke: 'var(--bg-main)', strokeWidth: 2 }}
           />
         </AreaChart>
@@ -180,3 +180,7 @@ export default function PortfolioChart({ data, isArs, range, onRangeChange, star
     </div>
   );
 }
+
+// The dashboard keeps loading every asset's history after the portfolio arrives, and that re-render used to land
+// in the middle of the entry animation and restart it. Its props don't change then, so memo skips it.
+export default memo(PortfolioChart);

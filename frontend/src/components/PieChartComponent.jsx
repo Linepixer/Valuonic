@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 
 // Dark-mode optimized color palette
@@ -9,11 +10,23 @@ const TICKER_COLORS = {
   USDT: '#e15759',
   QQQ: '#76b7b2',
   SPY: '#4e79a7',
+  // Picked to stay apart from the colors above and each other (smallest CIELAB distance ~23), not to match brands.
+  DIA: '#8c9eff',
+  NVDA: '#a3c940',
+  KO: '#c2185b',
+  MELI: '#a8962e',
+  AAPL: '#d9d4cf',
+  AMD: '#a0674b',
+  MSFT: '#29b6d6',
+  META: '#6247c9',
+  TSLA: '#e05fb6',
+  GOOGL: '#9be7c4',
+  AMZN: '#e6a8f5',
 };
 
 const DEFAULT_COLORS = ['#b07aa1', '#4e79a7', '#f28e2c', '#e15759', '#76b7b2', '#59a14f', '#edc948', '#ff9da7'];
 
-export default function PieChartComponent({ data }) {
+function PieChartComponent({ data }) {
   const chartData = data
     .filter(asset => asset.portfolio_percentage > 0)
     .map(asset => ({
@@ -68,3 +81,6 @@ export default function PieChartComponent({ data }) {
     </ResponsiveContainer>
   );
 }
+
+// Same reason as PortfolioChart: the dashboard re-renders when every asset's history arrives, mid-animation.
+export default memo(PieChartComponent);
