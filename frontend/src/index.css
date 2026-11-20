@@ -472,6 +472,15 @@ input:focus, select:focus, textarea:focus {
   font-size: 0.85rem;
 }
 
+/* On narrow screens the line wraps between links, never inside one ("Política de" / "Privacidad"). The JSX puts no
+   space between the links, so they are inline blocks: that is what gives the line somewhere to break. */
+.app-footer a,
+.auth-footer a,
+.footer-contact {
+  display: inline-block;
+  white-space: nowrap;
+}
+
 /* Build version shown under the footer contact line; injected by vite.config.js. */
 .app-version {
   display: block;
