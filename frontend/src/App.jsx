@@ -186,7 +186,7 @@ function App() {
 
       {isAuthenticated && !isFullscreenPage && (
         <footer className="app-footer">
-          <div style={{ maxWidth: '400px', lineHeight: '1.4' }}>Valuonic &copy; 2026 &mdash; Proyecto de código abierto para seguimiento de inversiones personales.</div>
+          <div style={{ lineHeight: '1.4' }}>Valuonic &copy; 2026 &mdash; Proyecto de código abierto para seguimiento de inversiones personales.</div>
           <div>
             <Link to="/terms" target="_blank" style={{ color: 'inherit', textDecoration: 'none', marginRight: '1rem' }}>Términos de Servicio</Link>
             <Link to="/privacy" target="_blank" style={{ color: 'inherit', textDecoration: 'none', marginRight: '1rem' }}>Política de Privacidad</Link>
