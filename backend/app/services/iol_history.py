@@ -42,6 +42,8 @@ class IolExport:
 class ImportPlan:
     rows: List[tuple]
     existing_days: set
+    # Days left out on request, typically a close that really traded but is not representative of the price.
+    skipped_days: List[date] = field(default_factory=list)
     warnings: List[str] = field(default_factory=list)
     # A split moves both closes alike, so it only warns; an implied dollar out of line means a misread or mistyped
     # close in one of the files, and blocks the import.
@@ -131,9 +133,12 @@ def _neighbour_median(values: List[float], i: int) -> float:
     return statistics.median(window) if window else values[i]
 
 
-def plan_import(db: Session, asset: Asset, ars: IolExport, usd: IolExport) -> ImportPlan:
-    only_ars = sorted(set(ars.closes) - set(usd.closes))
-    only_usd = sorted(set(usd.closes) - set(ars.closes))
+def plan_import(db: Session, asset: Asset, ars: IolExport, usd: IolExport, skip_days: frozenset = frozenset()) -> ImportPlan:
+    # Skipped days leave both files before any check, so they neither need to match nor count as a neighbour.
+    ars_closes = {day: close for day, close in ars.closes.items() if day not in skip_days}
+    usd_closes = {day: close for day, close in usd.closes.items() if day not in skip_days}
+    only_ars = sorted(set(ars_closes) - set(usd_closes))
+    only_usd = sorted(set(usd_closes) - set(ars_closes))
     if only_ars or only_usd:
         detail = []
         if only_ars:
@@ -142,12 +147,15 @@ def plan_import(db: Session, asset: Asset, ars: IolExport, usd: IolExport) -> Im
             detail.append(f"{len(only_usd)} solo en dólares (ej. {_fmt(only_usd[0])})")
         raise IolHistoryError("Los archivos no tienen las mismas fechas: " + ", ".join(detail) + ". Exportá ambos con el mismo rango.")
 
-    days = sorted(ars.closes)
-    rows = [(day, ars.closes[day], usd.closes[day]) for day in days]
+    days = sorted(ars_closes)
+    rows = [(day, ars_closes[day], usd_closes[day]) for day in days]
     existing_days = {
         ts.date() for (ts,) in db.query(AssetPrice.timestamp).filter(AssetPrice.asset_id == asset.id)
     }
-    plan = ImportPlan(rows=rows, existing_days=existing_days)
+    in_files = set(ars.closes) | set(usd.closes)
+    plan = ImportPlan(rows=rows, existing_days=existing_days, skipped_days=sorted(skip_days & in_files))
+    for day in sorted(skip_days - in_files):
+        plan.warnings.append(f"{_fmt(day)}: pediste omitirlo, pero no está en los archivos. ¿Es la fecha correcta?")
 
     event_days = {
         ts.date() for (ts,) in db.query(CorporateEvent.timestamp).filter(

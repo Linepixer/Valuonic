@@ -176,6 +176,12 @@ docker compose exec api python -m app.import_iol_history NVDA /tmp/NVDA_Cotizaci
 
 It only reports what it would import, warning about sharp jumps such as a split, and refuses to go on if the files don't match or a day's implied dollar is out of line. Add `--apply` to save it. Days that already have a price are skipped. On the server, run the same commands with `-f docker-compose.prod.yml`; development databases then get the history through `sync_prices`.
 
+If the out-of-line day is a real but unrepresentative close, for example a thin CEDEAR that spiked in pesos on 20/10/2023, the eve of the 2023 election, leave it out with `--omitir`. The date goes exactly as the error prints it, and the flag can be repeated. That day stays without a price, so the charts carry the previous day's price over it:
+
+```bash
+docker compose exec api python -m app.import_iol_history DIA /tmp/DIA_Cotizaciones_Historicas.xls /tmp/DIAD_Cotizaciones_Historicas.xls --omitir 20/10/2023
+```
+
 ### Configuration
 
 Every variable is documented in [`.env.example`](.env.example). For local development you don't need to change any of them.

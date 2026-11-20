@@ -7,10 +7,12 @@ dollars (e.g. NVDAD), exported with the same date range.
     docker compose exec api python -m app.import_iol_history NVDA /tmp/NVDA_Cotizaciones_Historicas.xls /tmp/NVDAD_Cotizaciones_Historicas.xls
 
 It only shows what it would do until you add --apply. Days that already have a price are never touched, so it is
-safe to run again.
+safe to run again. A day whose close is not representative (it traded, but far off the rest of the market) can be
+left out with --omitir 20/10/2023, as many times as needed; the charts then carry the previous day's price over it.
 """
 import argparse
 import sys
+from datetime import date, datetime
 from pathlib import Path
 
 from app.core.asset_catalog import SUPPORTED_ASSETS, dollar_line_ticker, normalize_ticker
@@ -25,6 +27,16 @@ NOT_ON_IOL = {"Criptomoneda", "Fiat"}
 
 def _ar(value: float) -> str:
     return f"{value:,.2f}".replace(",", "_").replace(".", ",").replace("_", ".")
+
+
+def _parse_day(value: str) -> date:
+    # Accepts the dates exactly as this command prints them (20/10/2023) as well as ISO (2023-10-20).
+    for fmt in ("%d/%m/%Y", "%Y-%m-%d"):
+        try:
+            return datetime.strptime(value.strip(), fmt).date()
+        except ValueError:
+            continue
+    raise argparse.ArgumentTypeError(f"'{value}' no es una fecha válida; usá DD/MM/AAAA, por ejemplo 20/10/2023.")
 
 
 def _read(path: str, expected_ticker: str, label: str):
@@ -45,6 +57,10 @@ def main() -> int:
     parser.add_argument("pesos", help="Export de IOL de la especie en pesos (NVDA)")
     parser.add_argument("dolares", help="Export de IOL de la especie en dólares (NVDAD)")
     parser.add_argument("--apply", action="store_true", help="Guardar los precios (sin esto solo muestra qué haría)")
+    parser.add_argument(
+        "--omitir", metavar="DD/MM/AAAA", type=_parse_day, action="append", default=[],
+        help="Día a dejar afuera, por ejemplo un cierre anómalo; se puede repetir",
+    )
     args = parser.parse_args()
 
     ticker = normalize_ticker(args.ticker)
@@ -62,16 +78,23 @@ def main() -> int:
         usd = _read(args.dolares, dollar_line_ticker(ticker), f"Archivo en dólares ({Path(args.dolares).name})")
         ensure_catalog_assets(db)
         asset = db.query(Asset).filter(Asset.ticker == ticker).one()
-        plan = plan_import(db, asset, ars, usd)
+        plan = plan_import(db, asset, ars, usd, frozenset(args.omitir))
     except IolHistoryError as exc:
         print(f"Error: {exc}")
+        db.close()
+        return 1
+    if not plan.rows:
+        print("Error: no queda ningún día para importar.")
         db.close()
         return 1
 
     first, last = plan.rows[0][0], plan.rows[-1][0]
     new_rows = plan.new_rows
-    print(f"{ticker}: {len(plan.rows)} días en los archivos, del {first:%d/%m/%Y} al {last:%d/%m/%Y}.")
+    print(f"{ticker}: {len(plan.rows) + len(plan.skipped_days)} días en los archivos, del {first:%d/%m/%Y} al {last:%d/%m/%Y}.")
     print(f"  Ya tenían precio: {len(plan.rows) - len(new_rows)} · Nuevos: {len(new_rows)}")
+    if plan.skipped_days:
+        skipped = ", ".join(f"{day:%d/%m/%Y}" for day in plan.skipped_days)
+        print(f"  Omitidos: {skipped} (quedan sin precio; el gráfico usa el del día anterior)")
     if new_rows:
         sample = new_rows[-1]
         print(f"  Último nuevo: {sample[0]:%d/%m/%Y} · ${_ar(sample[1])} · USD {_ar(sample[2])}")
