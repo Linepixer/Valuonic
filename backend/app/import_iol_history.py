@@ -13,7 +13,7 @@ import argparse
 import sys
 from pathlib import Path
 
-from app.core.asset_catalog import SUPPORTED_ASSETS, normalize_ticker
+from app.core.asset_catalog import SUPPORTED_ASSETS, dollar_line_ticker, normalize_ticker
 from app.database import SessionLocal
 from app.models.asset import Asset
 from app.services.catalog_service import ensure_catalog_assets
@@ -59,7 +59,7 @@ def main() -> int:
     db = SessionLocal()
     try:
         ars = _read(args.pesos, ticker, f"Archivo en pesos ({Path(args.pesos).name})")
-        usd = _read(args.dolares, f"{ticker}D", f"Archivo en dólares ({Path(args.dolares).name})")
+        usd = _read(args.dolares, dollar_line_ticker(ticker), f"Archivo en dólares ({Path(args.dolares).name})")
         ensure_catalog_assets(db)
         asset = db.query(Asset).filter(Asset.ticker == ticker).one()
         plan = plan_import(db, asset, ars, usd)

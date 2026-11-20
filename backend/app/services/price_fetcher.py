@@ -4,6 +4,8 @@ import time
 import re
 from typing import Dict, Optional
 
+from app.core.asset_catalog import dollar_line_ticker
+
 class PriceFetcher:
     _cached_rates = None
     _cache_timestamp = 0
@@ -83,6 +85,20 @@ class PriceFetcher:
             "AAPLD": "https://iol.invertironline.com/titulo/cotizacion/BCBA/AAPLD/CEDEAR-APPLE-INC./",
             "AMD": "https://iol.invertironline.com/titulo/cotizacion/BCBA/AMD/CEDEAR-ADVANCED-MICRO-DEVICES-/",
             "AMDD": "https://iol.invertironline.com/titulo/cotizacion/BCBA/AMDD/CEDEAR-ADVANCED-MICRO-DEVICES-/",
+            "MSFT": "https://iol.invertironline.com/titulo/cotizacion/BCBA/MSFT/CEDEAR-MICROSOFT-CORP./",
+            "MSFTD": "https://iol.invertironline.com/titulo/cotizacion/BCBA/MSFTD/CEDEAR-MICROSOFT-CORP./",
+            # IOL still lists Meta under its old name.
+            "META": "https://iol.invertironline.com/titulo/cotizacion/BCBA/META/CEDEAR-FACEBOOK--INC./",
+            "METAD": "https://iol.invertironline.com/titulo/cotizacion/BCBA/METAD/CEDEAR-FACEBOOK--INC./",
+            "TSLA": "https://iol.invertironline.com/titulo/cotizacion/BCBA/TSLA/CEDEAR-TESLA--INC./",
+            "TSLAD": "https://iol.invertironline.com/titulo/cotizacion/BCBA/TSLAD/CEDEAR-TESLA--INC./",
+            "GOOGL": "https://iol.invertironline.com/titulo/cotizacion/BCBA/GOOGL/CEDEAR-ALPHABET-INC.-CL.-A/",
+            # GOOGL's dollar line (see DOLLAR_LINE_TICKERS); IOL still lists it under the old Google name.
+            "GOGLD": "https://iol.invertironline.com/titulo/cotizacion/BCBA/GOGLD/CEDEAR-GOOGLE-INC./",
+            "AMZN": "https://iol.invertironline.com/titulo/cotizacion/BCBA/AMZN/CEDEAR-AMAZON.COM--INC/",
+            "AMZND": "https://iol.invertironline.com/titulo/cotizacion/BCBA/AMZND/CEDEAR-AMAZON.COM--INC/",
+            "DIA": "https://iol.invertironline.com/titulo/cotizacion/BCBA/DIA/CEDEAR-SPDR-DOW-JONES-INDUSTRIAL/",
+            "DIAD": "https://iol.invertironline.com/titulo/cotizacion/BCBA/DIAD/CEDEAR-SPDR-DOW-JONES-INDUSTRIAL/",
         }
         
         t = ticker.upper()
@@ -138,7 +154,7 @@ class PriceFetcher:
             else:
                 # Assume asset is a CEDEAR or ETF traded on IOL
                 ars = PriceFetcher._scrape_iol_specific(t) or 0.0
-                usd = PriceFetcher._scrape_iol_specific(t + "D")
+                usd = PriceFetcher._scrape_iol_specific(dollar_line_ticker(t))
                 
                 if usd is None: usd = ars / usd_to_ars if usd_to_ars else 0.0
                 

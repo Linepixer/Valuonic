@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import api from '../api';
 
 // Bought with the MEP dollar, so the form suggests the "bolsa" rate for them.
-const CEDEARS = ['SPY', 'QQQ', 'GLD', 'NVDA', 'KO', 'MELI', 'AAPL', 'AMD'];
+const CEDEARS = ['SPY', 'QQQ', 'GLD', 'DIA', 'NVDA', 'KO', 'MELI', 'AAPL', 'AMD', 'MSFT', 'META', 'TSLA', 'GOOGL', 'AMZN'];
 
 export default function TransactionForm({ onTransactionAdded, exchangeRates }) {
   const [timestamp, setTimestamp] = useState('');
