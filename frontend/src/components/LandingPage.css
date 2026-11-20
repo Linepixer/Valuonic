@@ -108,14 +108,14 @@
 }
 
 .btn-landing-primary {
-  background: #10B981;
-  color: #050505;
+  background: #0B6E50;
+  color: #E6ECE9;
   padding: 0.55rem 1.25rem;
   border-radius: 8px;
   font-size: 0.88rem;
   font-weight: 600;
   text-decoration: none;
-  transition: background-color 0.2s ease, transform 0.15s ease;
+  transition: background-color 0.2s ease;
   border: none;
   cursor: pointer;
   display: inline-flex;
@@ -123,10 +123,17 @@
   gap: 0.45rem;
 }
 
+/* The label keeps its color on hover; only the fill lightens and the arrow nudges forward. */
 .btn-landing-primary:hover {
-  background: #059669;
-  color: #FFFFFF;
-  transform: translateY(-1px);
+  background: #0E7C5B;
+}
+
+.btn-landing-primary svg {
+  transition: transform 0.2s ease;
+}
+
+.btn-landing-primary:hover svg {
+  transform: translateX(3px);
 }
 
 /* ==========================================================================
@@ -208,14 +215,14 @@
 
 /* Hero Action Buttons - Solid 8px rounded, NO neon glow */
 .btn-hero-primary {
-  background: #10B981;
-  color: #050505;
+  background: #0B6E50;
+  color: #E6ECE9;
   padding: 0.85rem 1.65rem;
   border-radius: 8px;
   font-weight: 600;
   font-size: 0.98rem;
   text-decoration: none;
-  transition: background-color 0.2s ease, transform 0.15s ease;
+  transition: background-color 0.2s ease;
   border: none;
   cursor: pointer;
   display: inline-flex;
@@ -224,9 +231,15 @@
 }
 
 .btn-hero-primary:hover {
-  background: #059669;
-  color: #FFFFFF;
-  transform: translateY(-1px);
+  background: #0E7C5B;
+}
+
+.btn-hero-primary svg {
+  transition: transform 0.2s ease;
+}
+
+.btn-hero-primary:hover svg {
+  transform: translateX(3px);
 }
 
 .btn-hero-github {
