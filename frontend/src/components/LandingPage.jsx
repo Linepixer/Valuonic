@@ -9,6 +9,7 @@ import {
   TrendingUp
 } from 'lucide-react';
 import AppVersion from './AppVersion';
+import AssetStrip from './AssetStrip';
 import './LandingPage.css';
 
 export default function LandingPage() {
@@ -77,10 +78,9 @@ export default function LandingPage() {
         <div className="hero-grid">
           {/* Columna Izquierda: Copywriting y CTAs */}
           <div className="hero-content">
-            <div className="hero-badge animate-landing" style={{ animationDelay: '0.1s' }}>
-              <span className="hero-badge-dot"></span>
-              <span>Proyecto Open Source · Pensado para el mercado argentino y global</span>
-            </div>
+            <p className="hero-eyebrow animate-landing" style={{ animationDelay: '0.1s' }}>
+              Proyecto open source — Pensado para el mercado argentino
+            </p>
 
             <h1 className="hero-title animate-landing" style={{ animationDelay: '0.2s' }}>
               Seguimiento patrimonial bimonetario con métricas reales.
@@ -115,11 +115,11 @@ export default function LandingPage() {
             <div className="hero-specs animate-landing" style={{ animationDelay: '0.5s' }}>
               <span className="hero-spec-item">
                 <Check size={14} className="hero-spec-icon" strokeWidth={3} />
-                <span>100% Sin custodia (Self-hosted)</span>
+                <span>Sin anuncios</span>
               </span>
               <span className="hero-spec-item">
                 <Check size={14} className="hero-spec-icon" strokeWidth={3} />
-                <span>Cero telemetría</span>
+                <span>Código auditable</span>
               </span>
               <span className="hero-spec-item">
                 <Check size={14} className="hero-spec-icon" strokeWidth={3} />
@@ -151,6 +151,8 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
+
+      <AssetStrip />
 
       {/* 3. Sección de Funcionalidades (Grilla Bento) */}
       <section id="features" className="bento-section">

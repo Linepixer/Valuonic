@@ -169,34 +169,14 @@
   text-align: left;
 }
 
-/* Hero Badge */
-.hero-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.65rem;
-  padding: 0.4rem 1.1rem;
-  background: rgba(17, 19, 24, 0.85);
-  backdrop-filter: blur(8px);
-  color: #CBD5E1;
-  border-radius: 100px;
-  font-size: 0.85rem;
-  font-weight: 500;
-  margin-bottom: 1.75rem;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.hero-badge-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: #10B981;
-  box-shadow: 0 0 8px rgba(16, 185, 129, 0.8);
-  animation: livePulse 2.2s infinite ease-in-out;
-}
-
-@keyframes livePulse {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.35; transform: scale(1.2); }
+/* Hero eyebrow: plain small caps instead of a pill, so it reads editorial rather than templated. */
+.hero-eyebrow {
+  margin: 0 0 1.5rem 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #64748B;
 }
 
 /* H1 - Balanced sizing (max 3 lines on desktop) */
@@ -276,7 +256,7 @@
 .hero-specs {
   display: flex;
   align-items: center;
-  gap: 1.75rem;
+  gap: 2.5rem;
   flex-wrap: wrap;
   padding-top: 1.35rem;
   border-top: 1px solid rgba(255, 255, 255, 0.06);
@@ -421,6 +401,82 @@
 
 .hero-mockup:hover .mockup-mobile-frame {
   transform: translateY(-8px) translateX(-4px);
+}
+
+/* ==========================================================================
+   2b. FRANJA DE ACTIVOS SOPORTADOS
+   ========================================================================== */
+
+.asset-strip-section {
+  max-width: 1540px;
+  margin: 0 auto;
+  /* No top padding: the hero's own bottom padding is the gap, so the strip reads as the hero's closing line. */
+  padding: 0 2rem;
+  box-sizing: border-box;
+  position: relative;
+  z-index: 2;
+}
+
+.asset-strip {
+  overflow: hidden;
+  /* Purely decorative: no hover, selection or clicks, so nothing the cursor does can stop or change it. */
+  pointer-events: none;
+  user-select: none;
+  padding: 1.1rem 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  /* Logos fade in and out at the edges instead of being cut off. */
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 12%, #000 88%, transparent);
+  mask-image: linear-gradient(to right, transparent, #000 12%, #000 88%, transparent);
+}
+
+.asset-strip-track {
+  display: flex;
+  width: max-content;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  animation: assetStripScroll 48s linear infinite;
+}
+
+@keyframes assetStripScroll {
+  to { transform: translateX(-50%); }
+}
+
+/* Spacing is padding, not flex gap, so each copy of the list is exactly half the track and the loop lands seamlessly. */
+.asset-strip-item {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0 1.9rem;
+  height: 32px;
+}
+
+.asset-strip-glyph {
+  flex-shrink: 0;
+  color: var(--tint);
+}
+
+.asset-strip-part {
+  fill: var(--part);
+}
+
+.asset-strip-ticker {
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  /* A step below the logos so they lead and the ticker only labels them. */
+  color: #94A3B8;
+}
+
+@media (max-width: 768px) {
+  .asset-strip-section {
+    padding: 0 1rem;
+  }
+
+  .asset-strip-item {
+    padding: 0 1.25rem;
+  }
 }
 
 /* ==========================================================================
