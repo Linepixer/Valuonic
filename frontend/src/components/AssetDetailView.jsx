@@ -3,6 +3,7 @@ import { ArrowLeft, RefreshCw, AlertTriangle } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { axisDateFormatter, formatTooltipDate } from '../chartDates';
 import api from '../api';
+import { getAssetIcon } from './AssetIcon';
 
 export default function AssetDetailView({ asset, currency, onBack }) {
   const [data, setData] = useState([]);
@@ -95,6 +96,7 @@ export default function AssetDetailView({ asset, currency, onBack }) {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
           <div>
             <h2 style={{ margin: '0 0 0.5rem 0', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '2rem' }}>
+              <span style={{ display: 'flex', marginRight: '0.35rem' }}>{getAssetIcon(asset.ticker, 44)}</span>
               {asset.ticker} <span className="text-muted" style={{ fontSize: '1.25rem', fontWeight: 'normal' }}>{asset.name}</span>
             </h2>
             <div className="summary-label">Precio Actual ({currency})</div>
@@ -102,7 +104,6 @@ export default function AssetDetailView({ asset, currency, onBack }) {
               {formatCurrency(currentPrice)}
             </div>
           </div>
-
         </div>
 
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '1rem' }}>
