@@ -114,6 +114,8 @@ const CUSTOM_ASSET_NAMES = {
   'XRP': 'Ripple'
 };
 
+const MARKET_TYPE_ORDER = { 'Moneda Fiat': 1, 'ETFs': 2, 'Acciones': 3, 'Criptomonedas': 4 };
+
 const getTypeBadge = (type) => {
   let bg = '#374151';
   let color = '#d1d5db';
@@ -361,6 +363,15 @@ export default function Dashboard({ currency }) {
     }
     return 'Otros';
   };
+
+  // Cotizaciones lists fiat first, then ETFs, stocks and crypto, alphabetical within each; the table and the mobile
+  // cards share this one order.
+  const marketAssets = [...allAssets].sort((a, b) => {
+    const orderA = MARKET_TYPE_ORDER[getAssetType(a.ticker)] ?? 99;
+    const orderB = MARKET_TYPE_ORDER[getAssetType(b.ticker)] ?? 99;
+    if (orderA !== orderB) return orderA - orderB;
+    return a.ticker.localeCompare(b.ticker);
+  });
 
   const categoryDistribution = portfolio.assets.reduce((acc, asset) => {
     const type = getAssetType(asset.ticker);
@@ -669,13 +680,7 @@ export default function Dashboard({ currency }) {
                 </tr>
               </thead>
               <tbody>
-                {[...allAssets].sort((a, b) => {
-                  const TYPE_ORDER = { 'Moneda Fiat': 1, 'ETFs': 2, 'Acciones': 3, 'Criptomonedas': 4 };
-                  const orderA = TYPE_ORDER[getAssetType(a.ticker)] || 99;
-                  const orderB = TYPE_ORDER[getAssetType(b.ticker)] || 99;
-                  if (orderA !== orderB) return orderA - orderB;
-                  return a.ticker.localeCompare(b.ticker);
-                }).map(asset => {
+                {marketAssets.map(asset => {
                   const currentPrice = isArs ? asset.current_price_ars : asset.current_price_usd;
                   return (
                     <tr
@@ -722,13 +727,7 @@ export default function Dashboard({ currency }) {
 
           {/* Mobile Cards View for Cotizaciones */}
           <div className="hide-on-desktop">
-            {[...allAssets].sort((a, b) => {
-              const TYPE_ORDER = { 'Moneda Fiat': 1, 'ETFs': 2, 'Acciones': 3, 'Criptomonedas': 4 };
-              const orderA = TYPE_ORDER[getAssetType(a.ticker)] || 99;
-              const orderB = TYPE_ORDER[getAssetType(b.ticker)] || 99;
-              if (orderA !== orderB) return orderA - orderB;
-              return a.ticker.localeCompare(b.ticker);
-            }).map(asset => {
+            {marketAssets.map(asset => {
               const currentPrice = isArs ? asset.current_price_ars : asset.current_price_usd;
               return (
                 <div
