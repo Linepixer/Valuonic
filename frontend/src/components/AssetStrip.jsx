@@ -69,8 +69,7 @@ function Glyph({ ticker }) {
   return (
     <svg className="asset-strip-glyph" viewBox={viewBox} width={box} height={box} style={{ '--tint': tint }} aria-hidden="true">
       {parts
-        // The strip shows marks without their circle, so a black part (Amazon's "a") turns white to stay visible.
-        ? parts.map(({ d, fill }) => <path key={d} d={d} className="asset-strip-part" style={{ '--part': isNearBlack(fill) ? '#FFFFFF' : fill }} />)
+        ? parts.map(({ d, fill }) => <path key={d} d={d} className="asset-strip-part" style={{ '--part': fill }} />)
         : <path d={path} fill="currentColor" />}
     </svg>
   );
