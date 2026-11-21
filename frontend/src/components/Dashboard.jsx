@@ -76,6 +76,8 @@ const Sparkline = ({ data, dataKey }) => {
   const first = data[0][dataKey];
   const last = data[data.length - 1][dataKey];
   const color = last >= first ? 'var(--profit)' : 'var(--loss)';
+  // A flat series (a stablecoin) draws a straight line, and the drop shadow 3px below it reads as a second line.
+  const isFlat = data.every(d => d[dataKey] === first);
   // Use a unique ID for the gradient based on the color to avoid mixing up multiple sparklines
   const gradientId = `colorSpark_${color.replace(/[^a-zA-Z0-9]/g, '')}`;
 
@@ -87,7 +89,7 @@ const Sparkline = ({ data, dataKey }) => {
 
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-      <AreaChart width={90} height={40} data={data} style={{ filter: `drop-shadow(0px 3px 6px ${color}40)` }}>
+      <AreaChart width={90} height={40} data={data} style={isFlat ? undefined : { filter: `drop-shadow(0px 3px 6px ${color}40)` }}>
         <defs>
           <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
             <stop offset="5%" stopColor={color} stopOpacity={0.6} />
