@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { ArrowLeft, ArrowUpRight, ArrowDownRight, RefreshCw, AlertTriangle, ExternalLink } from 'lucide-react';
 import api from '../api';
+import { getAssetIcon } from './AssetIcon';
 import PortfolioChart from './PortfolioChart';
 import { formatPct, getPeriodGain, getPeriodLabel } from '../periods';
 
@@ -87,6 +88,7 @@ export default function PortfolioAssetDetailView({ asset, currency, periodStarts
           <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
             <div>
               <h2 style={{ margin: '0 0 0.5rem 0', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '2rem' }}>
+                <span style={{ display: 'flex', marginRight: '0.35rem' }}>{getAssetIcon(asset.ticker, 44)}</span>
                 {asset.ticker} <span className="text-muted" style={{ fontSize: '1.25rem', fontWeight: 'normal' }}>{asset.name}</span>
               </h2>
               <div className="summary-label" style={{ marginTop: '1rem' }}>Valor Total en tu Portafolio ({currency})</div>
