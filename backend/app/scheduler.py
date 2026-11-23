@@ -7,6 +7,7 @@ from datetime import datetime
 from app.database import SessionLocal
 from app.models.asset import Asset
 from app.models.asset_price import AssetPrice
+from app.services.price_alerts import notify_long_failures
 from app.services.price_fetcher import PriceFetcher
 
 logger = logging.getLogger(__name__)
@@ -66,6 +67,7 @@ def warm_up_cache():
         for asset in assets:
             PriceFetcher.fetch_asset_prices(asset.ticker, asset.type)
         logger.info("Cache warm up completed.")
+        notify_long_failures()
     except Exception as e:
         logger.error(f"Error warming up cache: {e}")
     finally:

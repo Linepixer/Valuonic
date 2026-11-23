@@ -6,6 +6,7 @@ import re
 from typing import Dict, Optional
 
 from app.core.asset_catalog import dollar_line_ticker
+from app.services.price_alerts import QuoteFailureTracker
 
 NO_PRICE = {"usd": 0.0, "ars": 0.0}
 
@@ -53,14 +54,18 @@ class PriceFetcher:
 
         rates = {"bolsa": 1499.0, "cripto": 1541.0, "blue": 1500.0}
         
-        mep = PriceFetcher._scrape_dolarhoy("https://dolarhoy.com/cotizaciondolarbolsa")
-        if mep: rates["bolsa"] = mep
-            
-        blue = PriceFetcher._scrape_dolarhoy("https://dolarhoy.com/cotizaciondolarblue")
-        if blue: rates["blue"] = blue
-            
-        cripto = PriceFetcher._fetch_bitso("usdt_ars")
-        if cripto: rates["cripto"] = cripto
+        sources = {
+            "bolsa": ("Dólar MEP (DolarHoy)", lambda: PriceFetcher._scrape_dolarhoy("https://dolarhoy.com/cotizaciondolarbolsa")),
+            "blue": ("Dólar blue (DolarHoy)", lambda: PriceFetcher._scrape_dolarhoy("https://dolarhoy.com/cotizaciondolarblue")),
+            "cripto": ("Dólar cripto (Bitso usdt_ars)", lambda: PriceFetcher._fetch_bitso("usdt_ars")),
+        }
+        for rate_type, (label, fetch) in sources.items():
+            value = fetch()
+            if PriceFetcher._is_valid_price(value):
+                rates[rate_type] = value
+                QuoteFailureTracker.record_success(label)
+            else:
+                QuoteFailureTracker.record_failure(label)
 
         PriceFetcher._cached_rates = rates
         PriceFetcher._cache_timestamp = now
@@ -128,6 +133,21 @@ class PriceFetcher:
     def fetch_asset_prices(ticker: str, asset_type: str) -> Optional[Dict[str, float]]:
         """Bypasses the cache. None on any failure, so a failed fetch is never mistaken for a price of 0."""
         t = ticker.upper()
+        source = "Bitso" if asset_type.lower() == "criptomoneda" else "IOL"
+        label = f"{t} ({source})"
+
+        result = PriceFetcher._fetch_asset_prices_from_source(t, asset_type)
+        if result is None:
+            QuoteFailureTracker.record_failure(label)
+            return None
+
+        QuoteFailureTracker.record_success(label)
+        PriceFetcher._cached_asset_prices[t] = result
+        PriceFetcher._asset_cache_timestamps[t] = time.time()
+        return result
+
+    @staticmethod
+    def _fetch_asset_prices_from_source(t: str, asset_type: str) -> Optional[Dict[str, float]]:
 
         if t in ["USD", "USDT", "USDC"]:
             usd = 1.0
@@ -165,10 +185,7 @@ class PriceFetcher:
             print(f"Warning: discarded invalid quote for {t}: usd={usd} ars={ars}")
             return None
 
-        result = {"usd": usd, "ars": ars}
-        PriceFetcher._cached_asset_prices[t] = result
-        PriceFetcher._asset_cache_timestamps[t] = time.time()
-        return result
+        return {"usd": usd, "ars": ars}
 
     @staticmethod
     def get_asset_prices(ticker: str, asset_type: str) -> Dict[str, float]:

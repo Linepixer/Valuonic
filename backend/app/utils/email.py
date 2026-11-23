@@ -1,7 +1,7 @@
 import os
 import smtplib
 from email.message import EmailMessage
-from typing import Optional
+from typing import List, Optional, Tuple
 
 def send_verification_email(to_email: str, token: str) -> None:
     """
@@ -525,3 +525,53 @@ def send_account_deletion_email(to_email: str, token: str) -> None:
         print(f"Subject: Valuonic - Confirma la eliminación de tu cuenta")
         print(f"Deletion Link: {deletion_link}")
         print("="*50 + "\n")
+
+
+def send_price_failure_alert(failures: List[Tuple[str, str, float]]) -> bool:
+    """
+    Tells the operator which quotes have been failing for too long. Each failure is (source, failing since,
+    hours). Returns False only when SMTP is configured and the send fails, so the caller can retry.
+    """
+    alert_from = os.getenv("PRICE_ALERT_FROM")
+    alert_to = os.getenv("PRICE_ALERT_TO")
+    smtp_user = os.getenv("SMTP_USER")
+    smtp_password = os.getenv("SMTP_PASSWORD")
+    smtp_host = os.getenv("SMTP_HOST") or "smtp.zoho.com"
+    smtp_port = int(os.getenv("SMTP_PORT") or 465)
+
+    subject = f"Valuonic - {len(failures)} cotización(es) sin actualizar hace más de 12 horas"
+    lines = [f"- {source}: falla desde el {since} (hace {hours:.1f} h)" for source, since, hours in failures]
+    body = (
+        "Estas cotizaciones no se pudieron obtener durante más de 12 horas seguidas:\n\n"
+        + "\n".join(lines)
+        + "\n\nMientras tanto la app muestra el último precio válido y el historial diario no guarda esos días."
+        + "\nNo se vuelve a avisar por la misma cotización hasta que se recupere y vuelva a fallar."
+    )
+
+    if smtp_user and smtp_password and alert_from and alert_to:
+        try:
+            msg = EmailMessage()
+            msg.set_content(body)
+            msg['Subject'] = subject
+            msg['From'] = f"Valuonic <{alert_from}>"
+            msg['To'] = alert_to
+
+            with smtplib.SMTP_SSL(smtp_host, smtp_port) as server:
+                server.login(smtp_user, smtp_password)
+                server.send_message(msg)
+            print(f"Price failure alert sent to {alert_to} via SMTP.")
+            return True
+        except Exception as e:
+            print(f"Error sending price failure alert: {e}")
+            return False
+
+    # Mock mode
+    print("\n" + "="*50)
+    print("MOCK PRICE FAILURE ALERT")
+    print("="*50)
+    print(f"From: {alert_from or '(PRICE_ALERT_FROM not set)'}")
+    print(f"To: {alert_to or '(PRICE_ALERT_TO not set)'}")
+    print(f"Subject: {subject}")
+    print(body)
+    print("="*50 + "\n")
+    return True
