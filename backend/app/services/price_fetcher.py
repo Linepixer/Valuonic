@@ -1,10 +1,13 @@
 import json
+import math
 import urllib.request
 import time
 import re
 from typing import Dict, Optional
 
 from app.core.asset_catalog import dollar_line_ticker
+
+NO_PRICE = {"usd": 0.0, "ars": 0.0}
 
 class PriceFetcher:
     _cached_rates = None
@@ -118,14 +121,14 @@ class PriceFetcher:
         return None
 
     @staticmethod
-    def get_asset_prices(ticker: str, asset_type: str) -> Dict[str, float]:
+    def _is_valid_price(value: Optional[float]) -> bool:
+        return value is not None and math.isfinite(value) and value > 0
+
+    @staticmethod
+    def fetch_asset_prices(ticker: str, asset_type: str) -> Optional[Dict[str, float]]:
+        """Bypasses the cache. None on any failure, so a failed fetch is never mistaken for a price of 0."""
         t = ticker.upper()
-        now = time.time()
-        
-        if t in PriceFetcher._cached_asset_prices:
-            if now - PriceFetcher._asset_cache_timestamps.get(t, 0) < PriceFetcher._CACHE_TTL:
-                return PriceFetcher._cached_asset_prices[t]
-                
+
         if t in ["USD", "USDT", "USDC"]:
             usd = 1.0
             if t == "USD":
@@ -133,34 +136,52 @@ class PriceFetcher:
                 ars = rates.get("blue") or 1500.0
             else:
                 ars = PriceFetcher._fetch_bitso("usdt_ars") or 1500.0
-            result = {"usd": usd, "ars": ars}
         else:
             rates = PriceFetcher.get_dollar_rates()
             usd_to_ars = rates.get("cripto") or 1500.0
-                
+
             if asset_type.lower() == "criptomoneda":
                 usd = PriceFetcher._fetch_bitso(f"{t.lower()}_usd")
-                if usd is None: usd = 0.0
-                
+                if not PriceFetcher._is_valid_price(usd):
+                    print(f"Warning: no valid USD quote for {t} from Bitso")
+                    return None
+
                 # Fetch exact ARS price for supported Bitso markets
-                if t in ["BTC", "ETH", "DAI", "USDT"]:
-                    ars = PriceFetcher._fetch_bitso(f"{t.lower()}_ars")
-                else:
-                    ars = None
-                    
-                if ars is None: ars = usd * usd_to_ars
-                
-                result = {"usd": usd, "ars": ars}
+                ars = PriceFetcher._fetch_bitso(f"{t.lower()}_ars") if t in ["BTC", "ETH", "DAI", "USDT"] else None
+                if not PriceFetcher._is_valid_price(ars):
+                    ars = usd * usd_to_ars
             else:
                 # Assume asset is a CEDEAR or ETF traded on IOL
-                ars = PriceFetcher._scrape_iol_specific(t) or 0.0
+                ars = PriceFetcher._scrape_iol_specific(t)
+                if not PriceFetcher._is_valid_price(ars):
+                    print(f"Warning: no valid ARS quote for {t} from IOL")
+                    return None
+
                 usd = PriceFetcher._scrape_iol_specific(dollar_line_ticker(t))
-                
-                if usd is None: usd = ars / usd_to_ars if usd_to_ars else 0.0
-                
-                result = {"usd": usd, "ars": ars}
-            
+                if not PriceFetcher._is_valid_price(usd):
+                    usd = ars / usd_to_ars
+
+        if not (PriceFetcher._is_valid_price(usd) and PriceFetcher._is_valid_price(ars)):
+            print(f"Warning: discarded invalid quote for {t}: usd={usd} ars={ars}")
+            return None
+
+        result = {"usd": usd, "ars": ars}
         PriceFetcher._cached_asset_prices[t] = result
-        PriceFetcher._asset_cache_timestamps[t] = now
-        
+        PriceFetcher._asset_cache_timestamps[t] = time.time()
         return result
+
+    @staticmethod
+    def get_asset_prices(ticker: str, asset_type: str) -> Dict[str, float]:
+        t = ticker.upper()
+        now = time.time()
+
+        if now - PriceFetcher._asset_cache_timestamps.get(t, 0) < PriceFetcher._CACHE_TTL:
+            return PriceFetcher._cached_asset_prices.get(t) or dict(NO_PRICE)
+
+        result = PriceFetcher.fetch_asset_prices(ticker, asset_type)
+        if result is not None:
+            return result
+
+        # Back off for a full TTL but keep serving the last valid quote.
+        PriceFetcher._asset_cache_timestamps[t] = now
+        return PriceFetcher._cached_asset_prices.get(t) or dict(NO_PRICE)

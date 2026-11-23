@@ -27,7 +27,7 @@ def fetch_and_save_prices():
 
         # Stablecoins are tracked too: worth 1 in USD, but their ARS price moves with the dollar every day.
         for asset in assets:
-            prices = PriceFetcher.get_asset_prices(asset.ticker, asset.type)
+            prices = PriceFetcher.fetch_asset_prices(asset.ticker, asset.type)
             if prices:
                 price_usd = prices["usd"]
                 price_ars = prices["ars"]
@@ -64,9 +64,7 @@ def warm_up_cache():
         
         assets = db.query(Asset).all()
         for asset in assets:
-            t = asset.ticker.upper()
-            PriceFetcher._asset_cache_timestamps[t] = 0
-            PriceFetcher.get_asset_prices(asset.ticker, asset.type)
+            PriceFetcher.fetch_asset_prices(asset.ticker, asset.type)
         logger.info("Cache warm up completed.")
     except Exception as e:
         logger.error(f"Error warming up cache: {e}")
