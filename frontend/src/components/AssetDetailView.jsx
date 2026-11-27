@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { ArrowLeft, RefreshCw, AlertTriangle } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { axisDateFormatter, formatTooltipDate } from '../chartDates';
+import { axisDateFormatter, formatTooltipDate, toIsoDate } from '../chartDates';
 import api from '../api';
 import { getAssetIcon } from './AssetIcon';
 
@@ -27,7 +27,7 @@ export default function AssetDetailView({ asset, currency, onBack }) {
       default: break;
     }
 
-    const cutoffStr = cutoffDate.toISOString().split('T')[0];
+    const cutoffStr = toIsoDate(cutoffDate);
     const filtered = data.filter(d => d.date >= cutoffStr);
 
     if (filtered.length < 2) return data.slice(-2);

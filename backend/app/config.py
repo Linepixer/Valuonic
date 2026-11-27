@@ -1,4 +1,6 @@
 import os
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
+
 from dotenv import load_dotenv
 
 # Pull in environment variables from the root .env file
@@ -19,6 +21,10 @@ class Settings:
 
     FRONTEND_URL: str = os.getenv("FRONTEND_URL", "")
 
+    # Not TZ: docker-compose passes the .env to Postgres too, and on a fresh volume TZ would become the database's
+    # timezone, shifting the dates of imported price history.
+    APP_TIMEZONE: str = os.getenv("APP_TIMEZONE") or "America/Argentina/Buenos_Aires"
+
     # Fail secure: only an explicit plain-HTTP local frontend may receive the session cookie without the Secure flag.
     COOKIE_SECURE: bool = not FRONTEND_URL.startswith(("http://localhost", "http://127.0.0.1"))
     
@@ -31,6 +37,13 @@ settings = Settings()
 
 if not settings.SECRET_KEY:
     raise ValueError("CRITICAL SECURITY ERROR: You MUST set a SECRET_KEY in the .env file!")
+
+try:
+    ZoneInfo(settings.APP_TIMEZONE)
+except (ZoneInfoNotFoundError, ValueError):
+    raise ValueError(
+        f"APP_TIMEZONE '{settings.APP_TIMEZONE}' is not a valid IANA timezone, e.g. America/Argentina/Buenos_Aires."
+    )
 
 # Keys that have been published in .env.example. Anyone can sign valid tokens with them, so they are only
 # tolerated with a plain-HTTP localhost frontend, never on a real deployment.

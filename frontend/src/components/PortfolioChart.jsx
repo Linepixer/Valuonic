@@ -1,6 +1,6 @@
 import { useState, useMemo, memo } from 'react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { axisDateFormatter, formatTooltipDate } from '../chartDates';
+import { axisDateFormatter, formatTooltipDate, toIsoDate } from '../chartDates';
 
 function PortfolioChart({ data, isArs, range, onRangeChange, startDate, isGain }) {
   const [internalRange, setInternalRange] = useState('1M');
@@ -36,7 +36,7 @@ function PortfolioChart({ data, isArs, range, onRangeChange, startDate, isGain }
     if (timeRange === '6M') targetDate.setMonth(baseDate.getMonth() - 6);
     if (timeRange === '1A') targetDate.setFullYear(baseDate.getFullYear() - 1);
     
-    const targetString = targetDate.toISOString().split('T')[0];
+    const targetString = toIsoDate(targetDate);
     const filtered = chartData.filter(d => d.date >= targetString);
     
     return filtered.length >= 2 ? filtered : chartData.slice(-2);

@@ -8,7 +8,7 @@ Safe to run again: an existing demo account is kept as is and only the market da
 import csv
 import sys
 import unicodedata
-from datetime import datetime, timezone
+from datetime import datetime
 from decimal import Decimal
 from pathlib import Path
 
@@ -41,7 +41,7 @@ def _normalize_type(raw: str) -> str:
 
 
 def read_demo_transactions(path: Path) -> list[TransactionCreate]:
-    """Parses the CSV the same way the app's import screen does (dates are DD/MM/YYYY HH:MM in UTC)."""
+    """Parses the CSV the same way the app's import screen does (dates are DD/MM/YYYY HH:MM in APP_TIMEZONE)."""
     transactions = []
     with path.open(encoding="utf-8-sig", newline="") as f:
         for row in csv.DictReader(f):
@@ -53,7 +53,7 @@ def read_demo_transactions(path: Path) -> list[TransactionCreate]:
             price = Decimal(row["Precio unitario"])
             is_cash_interest = tx_type == "Intereses" and quantity == 0
             transactions.append(TransactionCreate(
-                timestamp=datetime.strptime(row["Fecha"].strip(), "%d/%m/%Y %H:%M").replace(tzinfo=timezone.utc),
+                timestamp=datetime.strptime(row["Fecha"].strip(), "%d/%m/%Y %H:%M"),
                 ticker=ticker,
                 type=tx_type,
                 quantity=quantity,

@@ -155,13 +155,19 @@ export default function ImportTransactions({ onImportSuccess, onCancel, onDataCh
           return;
         }
 
-        const dateObj = new Date(`${year}-${month}-${day}T${timePart || '12:00'}:00Z`);
-        if (isNaN(dateObj.getTime())) {
+        const [hours = '', minutes = ''] = (timePart || '12:00').split(':');
+        // No time zone on purpose: the API reads it in Argentina's time, the one brokers export in.
+        timestamp = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}T${hours.padStart(2, '0')}:${minutes.padStart(2, '0')}:00`;
+
+        const dateObj = new Date(timestamp);
+        const isRealDate = !isNaN(dateObj.getTime())
+          && dateObj.getFullYear() === Number(year)
+          && dateObj.getMonth() + 1 === Number(month)
+          && dateObj.getDate() === Number(day);
+        if (!isRealDate) {
           setError(`Fecha u hora inválida en la fila ${i + 1} ("${fechaRaw}"). Verifica que los valores sean correctos.`);
           return;
         }
-
-        timestamp = dateObj.toISOString();
 
         const isCashInterest = finalType === "Intereses" && qtyRaw === 0;
 
@@ -280,7 +286,7 @@ export default function ImportTransactions({ onImportSuccess, onCancel, onDataCh
                   {
                     name: "Fecha",
                     desc: "Fecha y hora a la que se realizó la transacción.",
-                    format: "Formato requerido: DD/MM/YYYY HH:MM",
+                    format: "Formato requerido: DD/MM/YYYY HH:MM, en hora de Argentina",
                     badges: ["01/07/2026 14:30"]
                   },
                   {

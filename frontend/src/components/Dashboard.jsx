@@ -10,6 +10,7 @@ import CompoundInterestWidget from './CompoundInterestWidget';
 import PeriodMoversWidget from './PeriodMoversWidget';
 import PieChartComponent from './PieChartComponent';
 import PortfolioChart from './PortfolioChart';
+import { toIsoDate } from '../chartDates';
 import AssetDetailView from './AssetDetailView';
 import PortfolioAssetDetailView from './PortfolioAssetDetailView';
 import CategoryProgressBars from './CategoryProgressBars';
@@ -51,9 +52,9 @@ const formatQuantity = (value, ticker) => {
 // month's length). A fixed count of points is not a month: IOL imports hold weekdays only, the daily job weekends too.
 const sinceOneMonthAgo = (history) => {
   const now = new Date();
-  const month = now.getUTCMonth() - 1;
-  const lastDay = new Date(Date.UTC(now.getUTCFullYear(), month + 1, 0)).getUTCDate();
-  const cutoff = new Date(Date.UTC(now.getUTCFullYear(), month, Math.min(now.getUTCDate(), lastDay))).toISOString().slice(0, 10);
+  const month = now.getMonth() - 1;
+  const lastDay = new Date(now.getFullYear(), month + 1, 0).getDate();
+  const cutoff = toIsoDate(new Date(now.getFullYear(), month, Math.min(now.getDate(), lastDay)));
   let start = 0;
   for (let i = history.length - 1; i >= 0; i--) {
     if (history[i].date <= cutoff) {
@@ -269,12 +270,13 @@ export default function Dashboard({ currency }) {
       let csvContent = EXPECTED_HEADERS.join(',') + '\n';
 
       transactions.forEach(tx => {
+        // Local time, the one the import reads, so an exported file imports back unchanged.
         const dateObj = new Date(tx.timestamp);
-        const day = String(dateObj.getUTCDate()).padStart(2, '0');
-        const month = String(dateObj.getUTCMonth() + 1).padStart(2, '0');
-        const year = dateObj.getUTCFullYear();
-        const hours = String(dateObj.getUTCHours()).padStart(2, '0');
-        const minutes = String(dateObj.getUTCMinutes()).padStart(2, '0');
+        const day = String(dateObj.getDate()).padStart(2, '0');
+        const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+        const year = dateObj.getFullYear();
+        const hours = String(dateObj.getHours()).padStart(2, '0');
+        const minutes = String(dateObj.getMinutes()).padStart(2, '0');
 
         const fecha = `${day}/${month}/${year} ${hours}:${minutes}`;
         const activo = tx.ticker || '';

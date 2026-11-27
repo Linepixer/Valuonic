@@ -1,6 +1,6 @@
 import calendar
 import logging
-from datetime import date, datetime, timedelta
+from datetime import date, timedelta
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from typing import Dict, Iterable, List, Optional, Tuple
@@ -9,6 +9,7 @@ from uuid import UUID
 
 from fastapi import HTTPException
 
+from app.core.dates import local_date, stored_date, today as local_today
 from app.models.transaction import Transaction
 from app.models.asset import Asset
 from app.models.asset_price import AssetPrice
@@ -119,6 +120,21 @@ def _transaction_values(t: Transaction, is_stablecoin: bool, fallback_rate: floa
     return val_usd, val_usd * ex_rate
 
 
+def _split_ratio_after(t: Transaction, splits: Iterable[CorporateEvent]) -> float:
+    """
+    Combined ratio of the splits after the transaction's day, which its quantity and price must be adjusted by.
+    Compared by day, not instant: a split is stored at 00:00 UTC, still the evening before in APP_TIMEZONE, so an
+    operation that evening would otherwise count as after it. Same-day transactions are already post-split, as in
+    _iter_daily_positions.
+    """
+    tx_day = local_date(t.timestamp)
+    ratio = 1.0
+    for split in splits:
+        if stored_date(split.timestamp) > tx_day:
+            ratio *= float(split.ratio)
+    return ratio
+
+
 def _iter_daily_positions(transactions: Iterable[Transaction], prices: Iterable[AssetPrice],
                           splits: Iterable[CorporateEvent], start_date: date, end_date: date):
     """
@@ -129,13 +145,13 @@ def _iter_daily_positions(transactions: Iterable[Transaction], prices: Iterable[
     """
     daily_prices = defaultdict(dict)
     for p in prices:
-        daily_prices[p.timestamp.date()][p.asset_id] = {"usd": float(p.price_usd), "ars": float(p.price_ars)}
+        daily_prices[stored_date(p.timestamp)][p.asset_id] = {"usd": float(p.price_usd), "ars": float(p.price_ars)}
     daily_splits = defaultdict(list)
     for split in splits:
-        daily_splits[split.timestamp.date()].append(split)
+        daily_splits[stored_date(split.timestamp)].append(split)
     daily_txs = defaultdict(list)
     for t in transactions:
-        daily_txs[t.timestamp.date()].append(t)
+        daily_txs[local_date(t.timestamp)].append(t)
 
     balances = defaultdict(float)
     last_known_prices = {}
@@ -184,7 +200,7 @@ def _period_start_dates(today: date, first_day: date) -> Dict[str, date]:
 
 def _first_price_after(prices: List[AssetPrice], asset_id: UUID, day: date) -> Optional[Dict[str, float]]:
     for p in prices:
-        if p.asset_id == asset_id and p.timestamp.date() > day:
+        if p.asset_id == asset_id and stored_date(p.timestamp) > day:
             return {"usd": float(p.price_usd), "ars": float(p.price_ars)}
     return None
 
@@ -217,7 +233,7 @@ def _compute_period_gains(
     The percentage is measured against what was at stake: the starting value plus what was bought.
     `transactions` must be in chronological order.
     """
-    first_day = min((t.timestamp.date() for t in transactions), default=today)
+    first_day = min((local_date(t.timestamp) for t in transactions), default=today)
     starts = _period_start_dates(today, first_day)
 
     start_values: Dict[str, Dict[UUID, Tuple[float, float]]] = {key: {} for key in PERIODS}
@@ -248,7 +264,7 @@ def _compute_period_gains(
         bought = defaultdict(lambda: [0.0, 0.0])
         taken_out = defaultdict(lambda: [0.0, 0.0])
         for t in transactions:
-            if t.timestamp.date() <= start:
+            if local_date(t.timestamp) <= start:
                 continue
             t_type = t.type.strip().lower()
             val_usd, val_ars = tx_values[t.id]
@@ -323,14 +339,7 @@ def get_portfolio_summary(db: Session, user_id: UUID) -> PortfolioSummary:
         qty = float(t.quantity)
         price = float(t.price_per_unit)
         
-        # Apply Point-in-Time splits
-        effective_ratio = 1.0
-        asset_splits = splits_by_asset.get(t.asset_id, [])
-        for split in asset_splits:
-            # If the split happened AFTER this transaction, the transaction quantity needs to be adjusted
-            if split.timestamp > t.timestamp:
-                effective_ratio *= float(split.ratio)
-                
+        effective_ratio = _split_ratio_after(t, splits_by_asset.get(t.asset_id, []))
         qty *= effective_ratio
         if effective_ratio > 0:
             price /= effective_ratio
@@ -454,13 +463,13 @@ def get_portfolio_summary(db: Session, user_id: UUID) -> PortfolioSummary:
         else:
             continue
             
-        t_date = t.timestamp.date() if hasattr(t.timestamp, 'date') else t.timestamp
+        t_date = local_date(t.timestamp)
         usd_flows.append((t_date, flow_usd))
         ars_flows.append((t_date, flow_ars))
         usd_flows_by_asset[t.asset_id].append((t_date, flow_usd))
         ars_flows_by_asset[t.asset_id].append((t_date, flow_ars))
         
-    today = datetime.now().date()
+    today = local_today()
     usd_flows.append((today, total_portfolio_usd))
     ars_flows.append((today, total_portfolio_ars))
     
@@ -523,8 +532,8 @@ def get_portfolio_history(db: Session, user_id: UUID) -> PortfolioHistoryRespons
     corporate_events = db.query(CorporateEvent).filter(CorporateEvent.type.in_(HOLDINGS_MULTIPLIER_TYPES)).all()
     
     # We will compute daily values from the first transaction to today
-    start_date = transactions[0].timestamp.date()
-    end_date = datetime.now().date()
+    start_date = local_date(transactions[0].timestamp)
+    end_date = local_today()
 
     history = []
     for day, balances, known_prices in _iter_daily_positions(transactions, prices, corporate_events, start_date, end_date):
@@ -564,8 +573,8 @@ def get_portfolio_asset_history(db: Session, user_id: UUID, ticker: str) -> Port
     ).all()
     
     # We will compute daily values from the first transaction to today
-    start_date = transactions[0].timestamp.date()
-    end_date = datetime.now().date()
+    start_date = local_date(transactions[0].timestamp)
+    end_date = local_today()
 
     history = []
     for day, balances, known_prices in _iter_daily_positions(transactions, prices, corporate_events, start_date, end_date):

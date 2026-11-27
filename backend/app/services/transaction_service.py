@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, time, timedelta, timezone
 from decimal import Decimal
 from typing import Iterable
 from uuid import UUID
@@ -7,6 +7,7 @@ from sqlalchemy import desc
 from sqlalchemy.orm import Session
 
 from app.core.asset_catalog import normalize_ticker
+from app.core.dates import local_date
 from app.models.exchange_rate import ExchangeRateHistory
 from app.models.transaction import Transaction
 from app.schemas.transaction import TransactionCreate
@@ -15,11 +16,23 @@ from app.services.catalog_service import get_or_create_catalog_asset
 HISTORICAL_RATE_TYPE = "historico"
 
 
+def rates_cutoff(timestamp: datetime) -> datetime:
+    """
+    Rates stored before this instant belong to the operation's day or earlier. They mark their day at 00:00 UTC,
+    still the evening before in APP_TIMEZONE, so comparing instants would give an operation made after 21:00 in
+    Buenos Aires the next day's rate.
+    """
+    return datetime.combine(local_date(timestamp) + timedelta(days=1), time.min, tzinfo=timezone.utc)
+
+
 def resolve_historical_rate(db: Session, timestamp: datetime) -> Decimal:
-    """Dollar rate in effect at `timestamp`, used to value imported ARS operations in USD."""
+    """Dollar rate of the operation's day, used to value imported ARS operations in USD."""
     closest = (
         db.query(ExchangeRateHistory)
-        .filter(ExchangeRateHistory.rate_type == HISTORICAL_RATE_TYPE, ExchangeRateHistory.timestamp <= timestamp)
+        .filter(
+            ExchangeRateHistory.rate_type == HISTORICAL_RATE_TYPE,
+            ExchangeRateHistory.timestamp < rates_cutoff(timestamp),
+        )
         .order_by(desc(ExchangeRateHistory.timestamp))
         .first()
     )

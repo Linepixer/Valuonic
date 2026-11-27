@@ -1,12 +1,12 @@
 import threading
 import time
-from datetime import datetime, timedelta, timezone
+from datetime import datetime
 from typing import Dict, List, Tuple
 
+from app.core.dates import APP_TZ
 from app.utils.email import send_price_failure_alert
 
 FAILURE_ALERT_AFTER_SECONDS = 12 * 60 * 60
-ARGENTINA_TZ = timezone(timedelta(hours=-3))
 
 
 class QuoteFailureTracker:
@@ -55,7 +55,7 @@ def notify_long_failures() -> None:
     failures = [
         (
             key,
-            datetime.fromtimestamp(since, ARGENTINA_TZ).strftime("%d/%m/%Y %H:%M"),
+            datetime.fromtimestamp(since, APP_TZ).strftime("%d/%m/%Y %H:%M"),
             (now - since) / 3600,
         )
         for key, since in pending

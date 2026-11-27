@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { RefreshCw, AlertTriangle, Trash2, X, ArrowDown, ArrowUp, ArrowUpDown, Filter } from 'lucide-react';
 import api from '../api';
+import { toLocalDate } from '../chartDates';
 
 const formatCurrency = (value, currency) => {
   let validCurrency = currency;
@@ -110,13 +111,12 @@ export default function TransactionsList({ currency, onTransactionDeleted, refre
         const txDate = new Date(tx.timestamp).getTime();
 
         if (dateRange.start) {
-          const startDate = new Date(dateRange.start);
-          startDate.setHours(0, 0, 0, 0);
+          const startDate = toLocalDate(dateRange.start);
           if (txDate < startDate.getTime()) return false;
         }
 
         if (dateRange.end) {
-          const endDate = new Date(dateRange.end);
+          const endDate = toLocalDate(dateRange.end);
           endDate.setHours(23, 59, 59, 999);
           if (txDate > endDate.getTime()) return false;
         }

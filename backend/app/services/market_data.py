@@ -61,7 +61,7 @@ def build_market_data(db: Session) -> dict:
             ticker: [[day.isoformat(), usd, ars] for day, (usd, ars) in sorted(days.items())]
             for ticker, days in sorted(daily.items())
         },
-        # Exact timestamps, not days: imports pick the latest rate at or before each operation.
+        # Exact timestamps, not days, exported as stored. Imports pick the latest rate of each operation's day or before.
         "dollar_rates": [[rate.timestamp.isoformat(), float(rate.rate_value)] for rate in rates],
         # Added in place, without a version bump: old clones read only the keys above and ignore these two.
         "corporate_events": [

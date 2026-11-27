@@ -3,7 +3,8 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 from apscheduler.triggers.interval import IntervalTrigger
 from sqlalchemy.orm import Session
-from datetime import datetime
+from datetime import datetime, timezone
+from app.config import settings
 from app.database import SessionLocal
 from app.models.asset import Asset
 from app.models.asset_price import AssetPrice
@@ -11,7 +12,7 @@ from app.services.price_alerts import notify_long_failures
 from app.services.price_fetcher import PriceFetcher
 
 logger = logging.getLogger(__name__)
-scheduler = AsyncIOScheduler()
+scheduler = AsyncIOScheduler(timezone=settings.APP_TIMEZONE)
 
 def fetch_and_save_prices():
     """
@@ -74,10 +75,11 @@ def warm_up_cache():
         db.close()
 
 def start_scheduler():
-    # Schedule job to run daily at 18:00 (Market close)
+    # After BYMA closes at 17:00, so CEDEARs are saved at their closing price. A trigger instance ignores the
+    # scheduler's timezone and falls back to the container's (UTC), hence the explicit one.
     scheduler.add_job(
         fetch_and_save_prices,
-        CronTrigger(hour=18, minute=0),
+        CronTrigger(hour=18, minute=0, timezone=settings.APP_TIMEZONE),
         id="daily_price_fetcher",
         name="Fetch and save asset prices daily",
         replace_existing=True
@@ -90,7 +92,8 @@ def start_scheduler():
         id="price_cache_warmer",
         name="Keep price cache hot",
         replace_existing=True,
-        next_run_time=datetime.now()
+        # Aware on purpose: a naive now() would be read in APP_TIMEZONE and delay the first run by three hours.
+        next_run_time=datetime.now(timezone.utc)
     )
     
     scheduler.start()
